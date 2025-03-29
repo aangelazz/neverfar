@@ -75,6 +75,12 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.buttonText}>📷 Update Widget</Text>
       </TouchableOpacity>
       
+      <TouchableOpacity 
+        style={styles.button}
+        onPress={() => navigation.navigate('TestCamera')}>
+        <Text>Test Simple Camera</Text>
+      </TouchableOpacity>
+      
       <Text style={styles.sectionTitle}>Friend Updates</Text>
       
       {friendUpdates.map(friend => (

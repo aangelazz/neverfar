@@ -18,7 +18,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.a6zhuang.neverfar",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "This app uses the camera to let you share moments with friends."
       }
     },
     "android": {
@@ -26,7 +27,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.a6zhuang.neverfar"
+      "package": "com.a6zhuang.neverfar",
+      "permissions": ["CAMERA"]
     },
     "plugins": [
       [
