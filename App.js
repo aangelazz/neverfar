@@ -1,12 +1,15 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text } from 'react-native';
 import HomeScreen from './src/screens/HomeScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 import CameraScreen from './src/screens/CameraScreen';
+import BucketListScreen from './src/screens/BucketListScreen';
 
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
 // Fallback screen in case imports fail
 const FallbackScreen = () => (
@@ -14,6 +17,15 @@ const FallbackScreen = () => (
     <Text>Loading app...</Text>
   </View>
 );
+
+// Tab Navigator
+function TabNavigator() {
+  return (
+    <Tab.Navigator>
+      <Tab.Screen name="Bucket List" component={BucketListScreen} />
+    </Tab.Navigator>
+  );
+}
 
 export default function App() {
   useEffect(() => {
@@ -37,6 +49,11 @@ export default function App() {
         <Stack.Screen 
           name="Camera" 
           component={CameraScreen} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="Tabs" 
+          component={TabNavigator} 
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

@@ -9,7 +9,7 @@ export default function HomeScreen({ navigation }) {
     { id: 2, name: 'Mike', image: 'https://randomuser.me/api/portraits/men/32.jpg', time: '5h ago' },
     { id: 3, name: 'Emma', image: 'https://randomuser.me/api/portraits/women/44.jpg', time: 'Yesterday' }
   ]);
-  
+
   useEffect(() => {
     (async () => {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -18,24 +18,33 @@ export default function HomeScreen({ navigation }) {
       }
     })();
   }, []);
-  
+
   const goToCamera = () => {
     navigation.navigate('Camera');
   };
-  
+
   const goToFriends = () => {
     navigation.navigate('Friends');
   };
-  
+
+  const goToBucketList = () => {
+    navigation.navigate('Tabs', { screen: 'Bucket List' });
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Your Widget</Text>
-        <TouchableOpacity onPress={goToFriends}>
-          <Text style={styles.friendsLink}>Friends</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity onPress={goToFriends}>
+            <Text style={styles.headerButton}>Friends</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={goToBucketList}>
+            <Text style={styles.headerButton}>Bucket List</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      
+
       <View style={styles.widgetContainer}>
         {image ? (
           <Image source={{ uri: image }} style={styles.widgetImage} />
@@ -45,13 +54,13 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
       </View>
-      
+
       <TouchableOpacity style={styles.cameraButton} onPress={goToCamera}>
         <Text style={styles.buttonText}>📷 Update Widget</Text>
       </TouchableOpacity>
-      
+
       <Text style={styles.sectionTitle}>Friend Updates</Text>
-      
+
       {friendUpdates.map(friend => (
         <View key={friend.id} style={styles.friendUpdate}>
           <Image source={{ uri: friend.image }} style={styles.friendAvatar} />
@@ -61,7 +70,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
       ))}
-      
+
       <View style={styles.statsContainer}>
         <View style={styles.stat}>
           <Text style={styles.statValue}>124 miles</Text>
@@ -92,9 +101,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
   },
-  friendsLink: {
+  headerButtons: {
+    flexDirection: 'row',
+  },
+  headerButton: {
     color: '#6366f1',
     fontSize: 16,
+    marginLeft: 15, // Add spacing between buttons
   },
   widgetContainer: {
     margin: 20,
@@ -177,5 +190,5 @@ const styles = StyleSheet.create({
   statLabel: {
     color: '#6c757d',
     marginTop: 5,
-  }
+  },
 });
