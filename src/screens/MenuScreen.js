@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { logoutUser } from '../services/DatabaseService';
 
 const friends = [
@@ -15,45 +15,62 @@ const { width } = Dimensions.get('window');
 const radius = width * 0.35;
 
 export default function HomePage({ navigation }) {
-  // Add error handling and debugging
+  const heartScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(heartScale, {
+          toValue: 1.1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heartScale, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
   return (
     <View style={styles.safeContainer}>
       <View style={styles.container}>
-        <Text style={styles.title}>NeverFar</Text>
-        
-        {/* Circle of friends with position relative to center */}
+        <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
+
         <View style={styles.circleContainer}>
-          <TouchableOpacity style={styles.heartButton}>
-            <Text style={styles.heart}>❤️</Text>
-          </TouchableOpacity>
-          
+          <Animated.View style={[styles.heartButton, { transform: [{ scale: heartScale }] }]}>
+          <Image source={require('../../assets/images/squareLogo2.png')} style={styles.heartButton} />
+          </Animated.View>
+
           {friends.map((friend, index) => {
             const angle = (2 * Math.PI / friends.length) * index;
             const x = Math.cos(angle) * radius;
             const y = Math.sin(angle) * radius;
-            
+
             return (
               <Image
                 key={friend.id}
                 source={{ uri: friend.image }}
-                style={[styles.friendAvatar, { 
+                style={[styles.friendAvatar, {
                   transform: [
                     { translateX: x },
-                    { translateY: y }
-                  ] 
+                    { translateY: y },
+                  ],
                 }]}
               />
             );
           })}
         </View>
-      
+
         <TouchableOpacity 
           style={styles.homeButton}
           onPress={() => navigation.navigate('Home')}
         >
           <Text style={styles.buttonText}>Go to Home</Text>
         </TouchableOpacity>
-      
+
         <TouchableOpacity 
           style={styles.logoutButton}
           onPress={async () => {
@@ -72,11 +89,10 @@ export default function HomePage({ navigation }) {
   );
 }
 
-// Updated styles
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#bcd2ee',
   },
   container: {
     flex: 1,
@@ -84,23 +100,23 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 40,
+  logo: {
+    width: width * 0.8,
+    resizeMode: 'contain',
+    alignSelf: 'center',
   },
   circleContainer: {
     width: width * 0.9,
     height: width * 0.9,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: -width * 0.2,
     marginBottom: 40,
     position: 'relative',
   },
   heartButton: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#ff6b81',
+    width: width*0.4,
+    height: width*0.4,
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
@@ -113,18 +129,24 @@ const styles = StyleSheet.create({
   },
   friendAvatar: {
     position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: width * 0.2,
+    height: width * 0.2,
+    borderRadius: width * 0.1,
     borderWidth: 2,
     borderColor: 'white',
     top: '50%',
     left: '50%',
-    marginLeft: -30,
-    marginTop: -30,
+    marginLeft: -(width * 0.2) / 2,
+    marginTop: -(width * 0.2) / 2,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   homeButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#D282A6',
     padding: 15,
     borderRadius: 10,
     width: '100%',
@@ -137,7 +159,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   logoutButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: '#D282A6',
     padding: 15,
     borderRadius: 10,
     width: '100%',
