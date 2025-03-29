@@ -1,33 +1,37 @@
 {
   "expo": {
     "name": "NeverFar",
-    "slug": "neverfar",
+    "slug": "neverfar", 
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
+      "resizeMode": "contain", 
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.a6zhuang.neverfar",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
-    },
-    "web": {
-      "bundler": "metro",
-      "favicon": "./assets/images/favicon.png"
+      },
+      "package": "com.a6zhuang.neverfar"
     },
     "plugins": [
-    ]
+      "expo-camera",
+      "expo-image-picker"
+    ],
+    "sdkVersion": "52.0.0"
   }
 }
