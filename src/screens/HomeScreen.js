@@ -104,7 +104,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#D282A6',
   },
   header: {
     flexDirection: 'row',
@@ -114,11 +114,12 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   title: {
+    color: '#52050a',
     fontSize: 22,
     fontWeight: 'bold',
   },
   friendsLink: {
-    color: '#6366f1',
+    color: '#52050a',
     fontSize: 16,
   },
   widgetContainer: {
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: 'white',
+    color: '#52050a',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: '#832161',
   },
   friendAvatar: {
     width: 50,
@@ -197,10 +198,10 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#6366f1',
+    color: '#52050a',
   },
   statLabel: {
-    color: '#6c757d',
+    color: '#52050a',
     marginTop: 5,
   }
 });
