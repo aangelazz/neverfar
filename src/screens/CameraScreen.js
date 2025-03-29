@@ -5,6 +5,8 @@ import { Camera, CameraType } from 'expo-camera';
 export default function CameraScreen({ navigation }) {
   const [permission, requestPermission] = Camera.useCameraPermissions();
   const [cameraReady, setCameraReady] = useState(false);
+  // Add this state variable
+  const [type, setType] = useState(CameraType.back);
   const [capturedImage, setCapturedImage] = useState(null);
   const cameraRef = useRef(null);
 
@@ -56,7 +58,7 @@ export default function CameraScreen({ navigation }) {
     <View style={styles.container}>
       <Camera
         style={styles.camera}
-        type={CameraType.back}
+        type={type}
         ref={cameraRef}
         onCameraReady={() => setCameraReady(true)}
       >
