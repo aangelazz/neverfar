@@ -1,86 +1,96 @@
 import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, StatusBar } from 'react-native';
-import { Camera } from 'expo-camera';
+import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import { Camera, CameraType } from 'expo-camera';
 
 export default function CameraScreen({ navigation }) {
   const [hasPermission, setHasPermission] = useState(null);
-  const [type, setType] = useState(Camera.Constants.Type.back);
+  const [type, setType] = useState(CameraType.back);
   const [capturedImage, setCapturedImage] = useState(null);
   const cameraRef = useRef(null);
   
+  const requestPermission = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    setHasPermission(status === 'granted');
+  };
+  
   React.useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
+    requestPermission();
   }, []);
   
   const takePicture = async () => {
     if (cameraRef.current) {
-      const photo = await cameraRef.current.takePictureAsync();
-      setCapturedImage(photo.uri);
+      try {
+        const photo = await cameraRef.current.takePictureAsync();
+        setCapturedImage(photo.uri);
+      } catch (error) {
+        console.log('Error taking picture:', error);
+      }
     }
+  };
+  
+  const flipCamera = () => {
+    setType(type === CameraType.back ? CameraType.front : CameraType.back);
+  };
+  
+  const saveAndGoBack = () => {
+    navigation.navigate('Home', { capturedImage: capturedImage });
   };
   
   const retakePicture = () => {
     setCapturedImage(null);
   };
   
-  const saveAndGoBack = () => {
-    // Send the image back to HomeScreen
-    navigation.navigate('Home', { capturedImage: capturedImage });
-  };
-  
   if (hasPermission === null) {
-    return <View style={styles.container}><Text>Requesting camera permission...</Text></View>;
+    return (
+      <View style={styles.container}>
+        <Text>Requesting camera permission...</Text>
+      </View>
+    );
   }
   
   if (hasPermission === false) {
-    return <View style={styles.container}><Text>No access to camera</Text></View>;
+    return (
+      <View style={styles.container}>
+        <Text>No access to camera. Please enable camera permissions in settings.</Text>
+      </View>
+    );
+  }
+  
+  if (capturedImage) {
+    return (
+      <View style={styles.container}>
+        <Image source={{ uri: capturedImage }} style={styles.preview} />
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={retakePicture}>
+            <Text style={styles.buttonText}>Retake</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={saveAndGoBack}>
+            <Text style={styles.buttonText}>Share Moment</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   }
   
   return (
     <View style={styles.container}>
-      <StatusBar hidden />
-      {capturedImage ? (
-        // Image preview after capture
-        <View style={styles.previewContainer}>
-          <Image source={{ uri: capturedImage }} style={styles.previewImage} />
-          <View style={styles.previewButtons}>
-            <TouchableOpacity style={styles.button} onPress={retakePicture}>
-              <Text style={styles.text}>Retake</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={saveAndGoBack}>
-              <Text style={styles.text}>Share Moment</Text>
-            </TouchableOpacity>
-          </View>
+      <Camera 
+        style={styles.camera} 
+        type={type} 
+        ref={cameraRef}
+      >
+        <View style={styles.topControls}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.buttonText}>Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={flipCamera} style={styles.flipButton}>
+            <Text style={styles.buttonText}>Flip</Text>
+          </TouchableOpacity>
         </View>
-      ) : (
-        // Camera view
-        <Camera style={styles.camera} type={type} ref={cameraRef}>
-          <View style={styles.upperControls}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}>
-              <Text style={styles.text}>✕</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.flipButton}
-              onPress={() => {
-                setType(
-                  type === Camera.Constants.Type.back
-                    ? Camera.Constants.Type.front
-                    : Camera.Constants.Type.back
-                );
-              }}>
-              <Text style={styles.text}>Flip</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.lowerControls}>
-            <TouchableOpacity style={styles.captureButton} onPress={takePicture} />
-          </View>
-        </Camera>
-      )}
+        <View style={styles.bottomControls}>
+          <TouchableOpacity onPress={takePicture} style={styles.captureButton} />
+        </View>
+      </Camera>
     </View>
   );
 }
@@ -88,71 +98,64 @@ export default function CameraScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
   },
   camera: {
     flex: 1,
   },
-  upperControls: {
+  topControls: {
+    flex: 0.1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 20,
   },
-  backButton: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 20,
-    height: 40,
-    width: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  flipButton: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 20,
-    padding: 10,
-  },
-  lowerControls: {
+  bottomControls: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 30,
     alignSelf: 'center',
     width: '100%',
     alignItems: 'center',
   },
-  captureButton: {
-    backgroundColor: 'white',
-    borderRadius: 35,
-    height: 70,
-    width: 70,
-    borderWidth: 5,
-    borderColor: '#ddd',
+  backButton: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 10,
+    borderRadius: 5,
   },
-  text: {
+  flipButton: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 10,
+    borderRadius: 5,
+  },
+  captureButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'white',
+    borderWidth: 5,
+    borderColor: 'rgba(255,255,255,0.5)',
+  },
+  buttonText: {
     color: 'white',
     fontSize: 16,
   },
-  previewContainer: {
+  preview: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  previewImage: {
     width: '100%',
-    height: '80%',
   },
-  previewButtons: {
+  buttonContainer: {
+    position: 'absolute',
+    bottom: 30,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-evenly',
     width: '100%',
-    padding: 20,
   },
   button: {
-    backgroundColor: '#333',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
-    width: '45%',
+    width: '40%',
   },
   primaryButton: {
-    backgroundColor: '#4630EB',
+    backgroundColor: '#6366f1',
   }
 });
