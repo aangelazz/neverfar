@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { initDatabase, authenticateUser, registerUser, saveUserSession, getUserSession } from '../services/DatabaseService';
+import { initDatabase, authenticateUser, registerUser, saveUserSession, getUserSession, listAllUsers } from '../services/DatabaseService';
 
 // Validation schema
 const LoginSchema = Yup.object().shape({
@@ -50,6 +50,21 @@ export default function LoginScreen({ navigation }) {
     setup();
   }, [navigation]);
 
+  useEffect(() => {
+    // Debug database contents on startup
+    const checkDatabase = async () => {
+      try {
+        console.log('Checking database users:');
+        const users = await listAllUsers();
+        console.log(`Found ${users.length} users in database`);
+      } catch (error) {
+        console.error('Error checking database:', error);
+      }
+    };
+    
+    checkDatabase();
+  }, []);
+
   const handleLogin = async (values) => {
     try {
       const user = await authenticateUser(values.username, values.password);
@@ -62,12 +77,19 @@ export default function LoginScreen({ navigation }) {
 
   const handleRegister = async (values) => {
     try {
+      console.log('Registering user:', values.username);
       const userId = await registerUser(values.username, values.password);
+      console.log('Registration successful, got ID:', userId);
+      
+      // Check if we can read the user back
+      const users = await listAllUsers();
+      console.log('Current users after registration:', users);
+      
       await saveUserSession(userId, values.username);
       Alert.alert('Success', 'Registration successful!');
       navigation.replace('Menu');
     } catch (error) {
-      Alert.alert('Registration Failed', 'Username may already exist');
+      Alert.alert('Registration Failed', error.message || 'Username may already exist');
     }
   };
 
