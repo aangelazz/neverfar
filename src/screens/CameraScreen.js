@@ -78,6 +78,9 @@ export default function CameraScreen({ navigation }) {
         style={styles.camera} 
         type={type} 
         ref={cameraRef}
+        ratio="16:9"
+        onCameraReady={() => console.log('Camera ready')}
+        useCamera2Api={true}
       >
         <View style={styles.topControls}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>

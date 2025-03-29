@@ -29,7 +29,12 @@
       "package": "com.a6zhuang.neverfar"
     },
     "plugins": [
-      "expo-camera",
+      [
+        "expo-camera", 
+        {
+          "cameraPermission": "Allow NeverFar to access your camera."
+        }
+      ],
       "expo-image-picker"
     ],
     "sdkVersion": "52.0.0",

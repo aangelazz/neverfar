@@ -36,7 +36,7 @@ export default function App() {
         />
         <Stack.Screen 
           name="Camera" 
-          component={CameraScreen || FallbackScreen} 
+          component={CameraScreen} 
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
