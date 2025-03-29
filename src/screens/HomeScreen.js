@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function HomeScreen({ navigation }) {
@@ -18,6 +18,22 @@ export default function HomeScreen({ navigation }) {
       }
     })();
   }, []);
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => setIsLoading(false), 2000); // fake loading for 2 sec
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#6366f1" />
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   
   const goToCamera = () => {
     navigation.navigate('Camera');
@@ -26,10 +42,19 @@ export default function HomeScreen({ navigation }) {
   const goToFriends = () => {
     navigation.navigate('Friends');
   };
+
+  const goToMenu = () => {
+    navigation.navigate('Menu');
+  };
   
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}
+    contentContainerStyle={{ paddingBottom: 60 }}
+    >
       <View style={styles.header}>
+      <TouchableOpacity style={styles.cameraButton} onPress={goToMenu}>
+          <Text style={styles.buttonText}>🧭 Go to Menu</Text>
+      </TouchableOpacity>
         <Text style={styles.title}>Your Widget</Text>
         <TouchableOpacity onPress={goToFriends}>
           <Text style={styles.friendsLink}>Friends</Text>
