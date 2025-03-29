@@ -1,61 +1,41 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
 import { Camera, CameraType } from 'expo-camera';
 
 export default function CameraScreen({ navigation }) {
-  const [hasPermission, setHasPermission] = useState(null);
-  const [type, setType] = useState(CameraType.back);
+  const [permission, requestPermission] = Camera.useCameraPermissions();
+  const [cameraReady, setCameraReady] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const cameraRef = useRef(null);
-  
-  const requestPermission = async () => {
-    const { status } = await Camera.requestCameraPermissionsAsync();
-    setHasPermission(status === 'granted');
-  };
-  
-  React.useEffect(() => {
-    requestPermission();
-  }, []);
-  
-  const takePicture = async () => {
-    if (cameraRef.current) {
-      try {
-        const photo = await cameraRef.current.takePictureAsync();
-        setCapturedImage(photo.uri);
-      } catch (error) {
-        console.log('Error taking picture:', error);
-      }
-    }
-  };
-  
-  const flipCamera = () => {
-    setType(type === CameraType.back ? CameraType.front : CameraType.back);
-  };
-  
-  const saveAndGoBack = () => {
-    navigation.navigate('Home', { capturedImage: capturedImage });
-  };
-  
+
+  // Simplified approach just to get camera working
+  if (!permission) {
+    return (
+      <View style={styles.container}>
+        <Text>Requesting camera permissions...</Text>
+      </View>
+    );
+  }
+
+  if (!permission.granted) {
+    return (
+      <View style={styles.container}>
+        <Text>We need camera permissions to make this app work!</Text>
+        <TouchableOpacity style={styles.button} onPress={requestPermission}>
+          <Text style={styles.buttonText}>Grant Permission</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   const retakePicture = () => {
     setCapturedImage(null);
   };
-  
-  if (hasPermission === null) {
-    return (
-      <View style={styles.container}>
-        <Text>Requesting camera permission...</Text>
-      </View>
-    );
-  }
-  
-  if (hasPermission === false) {
-    return (
-      <View style={styles.container}>
-        <Text>No access to camera. Please enable camera permissions in settings.</Text>
-      </View>
-    );
-  }
-  
+
+  const saveAndGoBack = () => {
+    navigation.navigate('Home', { capturedImage: capturedImage });
+  };
+
   if (capturedImage) {
     return (
       <View style={styles.container}>
@@ -71,27 +51,39 @@ export default function CameraScreen({ navigation }) {
       </View>
     );
   }
-  
+
   return (
     <View style={styles.container}>
-      <Camera 
-        style={styles.camera} 
-        type={type} 
+      <Camera
+        style={styles.camera}
+        type={CameraType.back}
         ref={cameraRef}
-        ratio="16:9"
-        onCameraReady={() => console.log('Camera ready')}
-        useCamera2Api={true}
+        onCameraReady={() => setCameraReady(true)}
       >
         <View style={styles.topControls}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.buttonText}>Back</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={flipCamera} style={styles.flipButton}>
+          <TouchableOpacity onPress={() => setType(type === CameraType.back ? CameraType.front : CameraType.back)} style={styles.flipButton}>
             <Text style={styles.buttonText}>Flip</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.bottomControls}>
-          <TouchableOpacity onPress={takePicture} style={styles.captureButton} />
+          {cameraReady && (
+            <TouchableOpacity
+              style={styles.captureButton}
+              onPress={() => {
+                if (cameraRef.current) {
+                  cameraRef.current.takePictureAsync()
+                    .then(photo => {
+                      console.log('Photo taken:', photo.uri);
+                      setCapturedImage(photo.uri);
+                    })
+                    .catch(error => console.log('Error taking picture:', error));
+                }
+              }}
+            />
+          )}
         </View>
       </Camera>
     </View>
@@ -101,9 +93,12 @@ export default function CameraScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   camera: {
     flex: 1,
+    width: '100%',
   },
   topControls: {
     flex: 0.1,
