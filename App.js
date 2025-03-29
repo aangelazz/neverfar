@@ -6,6 +6,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 import CameraScreen from './src/screens/CameraScreen';
 import MenuScreen from './src/screens/MenuScreen';
+import LoginScreen from './src/screens/LoginScreen';
 
 const Stack = createStackNavigator();
 
@@ -24,10 +25,15 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator initialRouteName="Login">
+        <Stack.Screen 
+          name="Login" 
+          component={LoginScreen} 
+          options={{ headerShown: false }}
+        />
         <Stack.Screen 
           name="Home" 
-          component={HomeScreen || FallbackScreen} 
+          component={HomeScreen} 
           options={{ title: 'NeverFar' }}
         />
         <Stack.Screen 

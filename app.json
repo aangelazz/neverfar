@@ -1,14 +1,14 @@
 {
   "expo": {
     "name": "NeverFar",
-    "slug": "neverfar", 
+    "slug": "neverfar",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain", 
+      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
@@ -28,16 +28,20 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.a6zhuang.neverfar",
-      "permissions": ["CAMERA"]
+      "permissions": [
+        "CAMERA"
+      ]
     },
     "plugins": [
       [
-        "expo-camera", 
+        "expo-camera",
         {
           "cameraPermission": "Allow NeverFar to access your camera."
         }
       ],
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-sqlite",
+      "expo-secure-store"
     ],
     "sdkVersion": "52.0.0",
     "newArchEnabled": true
