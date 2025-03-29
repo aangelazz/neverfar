@@ -6,6 +6,8 @@ import { View, Text } from 'react-native';
 import HomeScreen from './src/screens/HomeScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 import CameraScreen from './src/screens/CameraScreen';
+import MenuScreen from './src/screens/MenuScreen';
+import LoginScreen from './src/screens/LoginScreen';
 import BucketListScreen from './src/screens/BucketListScreen';
 
 const Stack = createStackNavigator();
@@ -35,10 +37,15 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator initialRouteName="Login">
+        <Stack.Screen 
+          name="Login" 
+          component={LoginScreen} 
+          options={{ headerShown: false }}
+        />
         <Stack.Screen 
           name="Home" 
-          component={HomeScreen || FallbackScreen} 
+          component={HomeScreen} 
           options={{ title: 'NeverFar' }}
         />
         <Stack.Screen 
@@ -49,6 +56,11 @@ export default function App() {
         <Stack.Screen 
           name="Camera" 
           component={CameraScreen} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="Menu" 
+          component={MenuScreen} 
           options={{ headerShown: false }}
         />
         <Stack.Screen 

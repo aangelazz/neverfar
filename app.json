@@ -1,14 +1,14 @@
 {
   "expo": {
     "name": "NeverFar",
-    "slug": "neverfar", 
+    "slug": "neverfar",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain", 
+      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
@@ -18,7 +18,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.a6zhuang.neverfar",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "This app uses the camera to let you share moments with friends."
       }
     },
     "android": {
@@ -26,16 +27,21 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.a6zhuang.neverfar"
+      "package": "com.a6zhuang.neverfar",
+      "permissions": [
+        "CAMERA"
+      ]
     },
     "plugins": [
       [
-        "expo-camera", 
+        "expo-camera",
         {
           "cameraPermission": "Allow NeverFar to access your camera."
         }
       ],
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-sqlite",
+      "expo-secure-store"
     ],
     "sdkVersion": "52.0.0",
     "newArchEnabled": true

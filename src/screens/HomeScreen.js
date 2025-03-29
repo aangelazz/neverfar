@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function HomeScreen({ navigation }) {
@@ -19,6 +19,22 @@ export default function HomeScreen({ navigation }) {
     })();
   }, []);
 
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => setIsLoading(false), 2000); // fake loading for 2 sec
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#6366f1" />
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+
   const goToCamera = () => {
     navigation.navigate('Camera');
   };
@@ -27,13 +43,22 @@ export default function HomeScreen({ navigation }) {
     navigation.navigate('Friends');
   };
 
+  const goToMenu = () => {
+    navigation.navigate('Menu');
+  };
+
   const goToBucketList = () => {
     navigation.navigate('Tabs', { screen: 'Bucket List' });
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}
+    contentContainerStyle={{ paddingBottom: 60 }}
+    >
       <View style={styles.header}>
+      <TouchableOpacity style={styles.cameraButton} onPress={goToMenu}>
+          <Text style={styles.buttonText}>🧭 Go to Menu</Text>
+      </TouchableOpacity>
         <Text style={styles.title}>Your Widget</Text>
         <View style={styles.headerButtons}>
           <TouchableOpacity onPress={goToFriends}>
@@ -57,6 +82,12 @@ export default function HomeScreen({ navigation }) {
 
       <TouchableOpacity style={styles.cameraButton} onPress={goToCamera}>
         <Text style={styles.buttonText}>📷 Update Widget</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity 
+        style={styles.button}
+        onPress={() => navigation.navigate('TestCamera')}>
+        <Text>Test Simple Camera</Text>
       </TouchableOpacity>
 
       <Text style={styles.sectionTitle}>Friend Updates</Text>
@@ -88,7 +119,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#D282A6',
   },
   header: {
     flexDirection: 'row',
@@ -98,6 +129,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   title: {
+    color: '#52050a',
     fontSize: 22,
     fontWeight: 'bold',
   },
@@ -105,7 +137,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   headerButton: {
-    color: '#6366f1',
+    color: '#52050a',
     fontSize: 16,
     marginLeft: 15, // Add spacing between buttons
   },
@@ -140,7 +172,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: 'white',
+    color: '#52050a',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -156,7 +188,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: '#832161',
   },
   friendAvatar: {
     width: 50,
@@ -185,10 +217,10 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#6366f1',
+    color: '#52050a',
   },
   statLabel: {
-    color: '#6c757d',
+    color: '#52050a',
     marginTop: 5,
   },
 });
