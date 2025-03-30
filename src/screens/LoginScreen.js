@@ -12,7 +12,8 @@ import {
   Platform,
   Button,
   Image,
-  SafeAreaView
+  SafeAreaView,
+  Dimensions
 } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -28,24 +29,17 @@ import {
   saveUserSession
 } from '../services/DatabaseService';
 
-// Validation schemas
+const { width, height } = Dimensions.get('window');
+
 const LoginSchema = Yup.object().shape({
-  username: Yup.string()
-    .required('Username is required'),
-  password: Yup.string()
-    .required('Password is required')
+  username: Yup.string().required('Username is required'),
+  password: Yup.string().required('Password is required')
 });
 
 const RegisterSchema = Yup.object().shape({
-  username: Yup.string()
-    .required('Username is required')
-    .min(3, 'Username must be at least 3 characters'),
-  password: Yup.string()
-    .required('Password is required')
-    .min(6, 'Password must be at least 6 characters'),
-  confirmPassword: Yup.string()
-    .oneOf([Yup.ref('password'), null], 'Passwords must match')
-    .required('Confirm password is required'),
+  username: Yup.string().required('Username is required').min(3, 'Username must be at least 3 characters'),
+  password: Yup.string().required('Password is required').min(6, 'Password must be at least 6 characters'),
+  confirmPassword: Yup.string().oneOf([Yup.ref('password'), null], 'Passwords must match').required('Confirm password is required'),
   firstName: Yup.string().required('First name is required'),
   lastName: Yup.string().required('Last name is required')
 });
@@ -60,42 +54,24 @@ export default function LoginScreen({ navigation }) {
   useEffect(() => {
     const setup = async () => {
       try {
-        console.log('Setting up database...');
-        
-        // Initialize database with test user
         await initDatabase();
-        
-        // Check for existing session
         const session = await getUserSession();
-        
         if (session.isLoggedIn) {
-          console.log('Found existing session, navigating to Menu');
-          setCurrentUser({
-            userId: session.userId,
-            username: session.username,
-            firstName: session.firstName || session.username // Store as firstName instead of name
-          });
           navigation.replace('Menu');
           return;
         }
-        
       } catch (error) {
-        console.error('Setup error:', error);
         Alert.alert('Setup Error', error.message);
       } finally {
         setIsLoading(false);
       }
     };
-    
     setup();
   }, []);
 
   const handleLogin = async (values) => {
     try {
-      console.log('Login attempt:', values.username);
-      
       const result = await verifyCredentials(values.username, values.password);
-      
       if (result.success) {
         navigation.replace('Menu');
       } else {
@@ -167,115 +143,66 @@ export default function LoginScreen({ navigation }) {
       Alert.alert('Registration Failed', error.message || 'Username may already exist');
     }
   };
-  
-  // Reset database function for debugging
-  const resetDatabase = async () => {
-    try {
-      setIsLoading(true);
-      await clearAllSessions();
-      await initDatabase();
-      const users = await listAllUsers();
-      setDebug(`Database reset. Found ${users.length} users.`);
-      Alert.alert('Database Reset', 'Test user has been recreated.');
-    } catch (error) {
-      Alert.alert('Reset Failed', error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#4287f5" />
-      </View>
+      <View style={styles.container}><ActivityIndicator size="large" color="#4287f5" /></View>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <Image source={require('../../assets/images/loginHearts.png')} style={styles.loginHearts} resizeMode="contain" />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.logoContainer}>
-        <Image
-          source={require('../../assets/images/welcomeBackTitle.png')} // Path to your image
-          style={styles.logoImage}
-          resizeMode="contain" // Ensures the image scales proportionally
-        />
+          <Image source={require('../../assets/images/welcomeBackTitle.png')} style={styles.logoImage} resizeMode="contain" />
         </View>
 
         {!isRegistering ? (
-          <Formik
-            initialValues={{ username: '', password: '' }}
-            validationSchema={LoginSchema}
-            onSubmit={handleLogin}
-          >
+          <Formik initialValues={{ username: '', password: '' }} validationSchema={LoginSchema} onSubmit={handleLogin}>
             {({ handleChange, handleSubmit, values, errors, touched }) => (
-              <View style={styles.formContainer}>
-                <Text style={styles.title}>Log In</Text>
-                
+              <View style={styles.loginContainer}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Username</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your username"
-                    value={values.username}
-                    onChangeText={handleChange('username')}
-                    autoCapitalize="none"
-                  />
-                  {errors.username && touched.username && (
-                    <Text style={styles.errorText}>{errors.username}</Text>
-                  )}
+                  <TextInput style={styles.input} placeholder="Enter your username" placeholderTextColor="#832161" value={values.username} onChangeText={handleChange('username')} autoCapitalize="none" />
+                  {errors.username && touched.username && (<Text style={styles.errorText}>{errors.username}</Text>)}
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Password</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your password"
-                    value={values.password}
-                    onChangeText={handleChange('password')}
-                    secureTextEntry
-                  />
-                  {errors.password && touched.password && (
-                    <Text style={styles.errorText}>{errors.password}</Text>
-                  )}
+                  <TextInput style={styles.input} placeholder="Enter your password" placeholderTextColor="#832161" value={values.password} onChangeText={handleChange('password')} secureTextEntry />
+                  {errors.password && touched.password && (<Text style={styles.errorText}>{errors.password}</Text>)}
                 </View>
 
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={handleSubmit}
-                >
-                  <Text style={styles.buttonText}>LOGIN</Text>
-                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={handleSubmit}><Text style={styles.buttonText}>LOGIN</Text></TouchableOpacity>
 
                 <View style={styles.switchContainer}>
                   <Text style={styles.switchText}>Don't have an account?</Text>
-                  <TouchableOpacity onPress={() => setIsRegistering(true)}>
-                    <Text style={styles.switchLink}>Register</Text>
-                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsRegistering(true)}><Text style={styles.switchLink}>Register</Text></TouchableOpacity>
                 </View>
               </View>
             )}
           </Formik>
         ) : (
-          <Formik
-            initialValues={{
-              username: '',
-              password: '',
-              confirmPassword: '',
-              firstName: '',
-              lastName: ''
-            }}
-            validationSchema={RegisterSchema}
-            onSubmit={handleRegister}
-          >
+          <Formik initialValues={{ username: '', password: '', confirmPassword: '', firstName: '', lastName: '' }} validationSchema={RegisterSchema} onSubmit={handleRegister}>
             {({ handleChange, handleSubmit, values, errors, touched }) => (
-              <View style={styles.formContainer}>
-                <Text style={styles.title}>Register</Text>
+              <View style={styles.registerContainer}>
+                <Image source={require('../../assets/images/registerTitle.png')} style={styles.registerTitleImage} resizeMode="contain" />
 
+                {[{ label: 'First Name', field: 'firstName' }, { label: 'Last Name', field: 'lastName' }, { label: 'Username', field: 'username' }, { label: 'Password', field: 'password', secure: true }, { label: 'Confirm Password', field: 'confirmPassword', secure: true }].map(({ label, field, secure }) => (
+                  <View key={field} style={styles.registerInputGroup}>
+                    <Text style={styles.label}>{label}</Text>
+                    <TextInput
+                      style={styles.registerInput}
+                      placeholder={`Enter your ${label.toLowerCase()}`}
+                      placeholderTextColor="#832161"
+                      value={values[field]}
+                      onChangeText={handleChange(field)}
+                      secureTextEntry={secure}
+                    />
+                    {errors[field] && touched[field] && (<Text style={styles.errorText}>{errors[field]}</Text>)}
+                  </View>
+                ))}
+
+                <TouchableOpacity style={styles.registerButton} onPress={handleSubmit}><Text style={styles.buttonText}>Register</Text></TouchableOpacity>
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>First Name</Text>
                   <TextInput
@@ -382,15 +309,14 @@ export default function LoginScreen({ navigation }) {
 
                 <View style={styles.switchContainer}>
                   <Text style={styles.switchText}>Already have an account?</Text>
-                  <TouchableOpacity onPress={() => setIsRegistering(false)}>
-                    <Text style={styles.switchLink}>Login</Text>
-                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsRegistering(false)}><Text style={styles.switchLink}>Login</Text></TouchableOpacity>
                 </View>
               </View>
             )}
           </Formik>
         )}
       </ScrollView>
+      <Image source={require('../../assets/images/logoBlue.png')} style={styles.logoBlue} resizeMode="contain" />
     </KeyboardAvoidingView>
   );
 }
@@ -398,89 +324,124 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#832161',
+    backgroundColor: '#832161'
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 0,
+    paddingHorizontal: 0
   },
   logoContainer: {
-    position: 'absolute', // Allows absolute positioning
-    top: 40, // Distance from the top of the screen
-    left: -20, // Distance from the left of the screen
-    width: '120%', // Let the image size itself
-    height: 'auto', // Let the image size itself
-    alignItems: 'flex-start', // Aligns content to the start (left)
-    justifyContent: 'flex-start', // Ensures the container spans the full width
+    position: 'absolute',
+    top: 40,
+    left: -20,
+    width: '120%',
+    height: 'auto',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start'
   },
   logoImage: {
-    width: '80%', // Adjust the width as needed
-    height: undefined, // Let the height adjust automatically to maintain aspect ratio
-    aspectRatio: 2, // Adjust this to match the aspect ratio of your image
-    marginBottom: 30, // Add spacing below the image
+    width: '80%',
+    height: undefined,
+    aspectRatio: 2,
+    marginBottom: 30
   },
-  logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1f2937',
+  loginContainer: {
+    position: 'absolute',
+    right: 20,
+    top: '30%',
+    width: '50%',
+    alignSelf: 'flex-end',
+    paddingTop: 80
   },
-  formContainer: {
-    width: '100%',
+  registerContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    backgroundColor: 'white',
+    height: height,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    textAlign: 'center',
-    marginBottom: 20,
+  registerTitleImage: {
+    width: '80%',
+    height: undefined,
+    aspectRatio: 3,
+    marginBottom: 20
   },
   inputGroup: {
+    marginBottom: 16
+  },
+  registerInputGroup: {
     marginBottom: 16,
+    width: width * 0.9
+  },
+  registerInput: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 15,
+    paddingVertical: 12
   },
   label: {
     fontSize: 14,
     fontWeight: '500',
     color: '#4b5563',
-    marginBottom: 8,
+    marginBottom: 8
   },
   input: {
-    backgroundColor: 'white',
+    backgroundColor: '#bcd2ed',
     paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    paddingVertical: 12
   },
   errorText: {
     fontSize: 12,
     color: '#ef4444',
-    marginTop: 5,
+    marginTop: 5
   },
   button: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#bcd2ee',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 20
+  },
+  registerButton: {
+    backgroundColor: 'white',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 20,
+    width: width * 0.8
   },
   buttonText: {
-    color: 'white',
+    color: '#832161',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   switchContainer: {
-    marginTop: 20,
     alignItems: 'center',
+    marginTop: 20
   },
   switchText: {
-    color: '#4b5563',
-    fontSize: 14,
+    color: '#52050A',
+    fontSize: 14
   },
   switchLink: {
-    color: '#6366f1',
+    color: '#fff',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '500'
+  },
+  loginHearts: {
+    position: 'absolute',
+    top: '26%',
+    left: '-30%',
+    width: width * 2,
+    height: height * 0.6,
+    aspectRatio: 1.5
+  },
+  logoBlue: {
+    position: 'absolute',
+    bottom: width * 0.01,
+    right: width * 0.05,
+    width: width * 0.33,
+    height: undefined,
+    aspectRatio: 1
   },
   imagePickerContainer: {
     alignItems: 'center',

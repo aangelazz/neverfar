@@ -222,7 +222,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#25292e',
+    paddingTop: 40, // Add padding to the top to shift the screen down slightly
+    backgroundColor: '#d282a6',
   },
   headerContainer: {
     flexDirection: 'row',

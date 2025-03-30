@@ -16,6 +16,7 @@ import PhotoGalleryScreen from './src/screens/PhotoGalleryScreen';
 import { initDatabase } from './src/services/DatabaseService';
 import StarJarScreen from './src/screens/StarJarScreen';
 import AllNotesScreen from './src/screens/AllNotesScreen';
+import AddStarJarScreen from './src/components/AddStarJarScreen'; // Correct path to AddStarJarScreen
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -120,10 +121,16 @@ export default function App() {
         <Stack.Screen 
           name="StarJar" 
           component={StarJarScreen} 
+          options={{ title: 'Star Jar Notes' }} 
         />
         <Stack.Screen 
           name="AllNotes" 
           component={AllNotesScreen} 
+        />
+        <Stack.Screen 
+          name="AddStarJar" 
+          component={AddStarJarScreen} 
+          options={{ title: 'Add StarJar Note' }} 
         />
       </Stack.Navigator>
     </NavigationContainer>
