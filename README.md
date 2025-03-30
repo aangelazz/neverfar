@@ -52,3 +52,7 @@ Join our community of developers creating universal apps.
 NOTES
 
 - The database of users is NOT remote, meaning that only accounts made on the same device will appear. This is a result of React Native's iOS/mobile structure, meaning that the storage environments are isolated. Testing should only be done on the same device (physical device or iOS simulator)
+
+UPGRADES
+
+- can make the profile picture customizable, either uppon account creation or under a separate screen to change profile
