@@ -1,8 +1,23 @@
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 
-export default function ViewCalendarScreen({ route }) {
+export default function ViewCalendarScreen({ route, navigation }) {
   const { events } = route.params || { events: [] };
+
+  // Configure the header
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: '#467498', // Set header background color
+      },
+      headerTintColor: '#fff', // Set the back button color to white
+      headerTitleStyle: {
+        color: '#fff', // Set header text color to white
+        fontWeight: 'bold',
+      },
+      headerBackTitle: 'Back to Calendar', // Set back button text
+    });
+  }, [navigation]);
 
   const findBreaks = (events) => {
     const startOfDay = new Date();
@@ -97,24 +112,24 @@ export default function ViewCalendarScreen({ route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#25292e',
+    backgroundColor: '#bcd2ed', // Updated screen background color
     padding: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#832161', // Updated title font color
     marginBottom: 20,
     textAlign: 'center',
   },
   noEventsText: {
     fontSize: 16,
-    color: '#fff',
+    color: '#832161', // Updated no events text color
     textAlign: 'center',
     marginTop: 20,
   },
   eventBlock: {
-    backgroundColor: '#333',
+    backgroundColor: '#d282a6', // Updated calendar event box background color
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
@@ -122,15 +137,15 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ffd33d',
+    color: '#832161', // Updated font color for calendar event title
   },
   eventTime: {
     fontSize: 14,
-    color: '#fff',
+    color: '#fff', // Updated font color for calendar event time to white
     marginTop: 5,
   },
   breakBlock: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#467498', // Updated suggest a break box background color
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
@@ -138,11 +153,11 @@ const styles = StyleSheet.create({
   breakText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#fff', // Keep break text color white for contrast
   },
   breakTime: {
     fontSize: 14,
-    color: '#fff',
+    color: '#fff', // Keep break time color white for contrast
     marginTop: 5,
   },
 });

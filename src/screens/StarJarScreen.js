@@ -1,18 +1,37 @@
-import React, { useState, useLayoutEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddStarJarScreen from '../components/AddStarJarScreen';
 
 export default function StarJarScreen({ navigation }) {
-  // Mock data for notes
-  const [notes, setNotes] = useState([
-    { id: '1', note: 'Happy Birthday!', date: '2025-04-01', friend: 'Alice' },
-    { id: '2', note: 'Let’s catch up soon!', date: '2025-04-05', friend: 'Bob' },
-    { id: '3', note: 'Good luck on your exam!', date: '2025-03-28', friend: 'Charlie' },
-  ]);
+  const [notes, setNotes] = useState([]);
+
+  // Load notes from AsyncStorage when the screen is loaded
+  useEffect(() => {
+    const loadNotes = async () => {
+      try {
+        const storedNotes = await AsyncStorage.getItem('starJarNotes');
+        const notes = storedNotes ? JSON.parse(storedNotes) : [];
+        setNotes(notes);
+      } catch (error) {
+        console.error('Failed to load notes:', error);
+      }
+    };
+
+    loadNotes();
+  }, []);
 
   // Function to add a new note
-  const addNote = (newNote) => {
-    setNotes((prevNotes) => [...prevNotes, newNote]);
+  const addNote = async (newNote) => {
+    try {
+      const updatedNotes = [...notes, newNote];
+      setNotes(updatedNotes);
+
+      // Save the updated notes to AsyncStorage
+      await AsyncStorage.setItem('starJarNotes', JSON.stringify(updatedNotes));
+    } catch (error) {
+      console.error('Failed to save note:', error);
+    }
   };
 
   // Configure the header

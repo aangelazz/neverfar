@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect } from 'react';
 import { View, Button, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
@@ -14,6 +14,21 @@ const requestPermissions = async () => {
 
 export default function CalendarScreen({ navigation }) {
   const [events, setEvents] = useState([]);
+
+  // Configure the header
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: '#467498', // Set header background color
+      },
+      headerTintColor: '#fff', // Set the back button color to white
+      headerTitleStyle: {
+        color: '#fff', // Set header text color to white
+        fontWeight: 'bold',
+      },
+      headerBackTitle: 'Navigation', // Set back button text
+    });
+  }, [navigation]);
 
   const pickFile = async () => {
     await requestPermissions(); // Request permissions
@@ -81,19 +96,21 @@ export default function CalendarScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.backButtonText}>Back</Text>
+      {/* Upload Calendar Button */}
+      <TouchableOpacity style={styles.button} onPress={pickFile}>
+        <Text style={styles.buttonText}>Upload Calendar (.ics)</Text>
       </TouchableOpacity>
 
-      <Button title="Upload Calendar (.ics)" onPress={pickFile} />
-      <View style={{ marginVertical: 10 }} /> {/* Add spacing */}
-      <Button
-        title="View Calendar"
+      {/* View Calendar Button */}
+      <TouchableOpacity
+        style={styles.button}
         onPress={() => {
           console.log('Navigating to ViewCalendar with events:', events); // Debug log
           navigation.navigate('ViewCalendar', { events });
         }}
-      />
+      >
+        <Text style={styles.buttonText}>View Calendar</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -103,20 +120,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#25292e',
+    backgroundColor: '#d282a6', // Updated screen background color
   },
-  backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
-    backgroundColor: '#6366f1',
-    padding: 10,
-    borderRadius: 5,
+  button: {
+    backgroundColor: '#832161', // Updated button background color
+    paddingVertical: 15, // Increased vertical padding for larger buttons
+    paddingHorizontal: 30, // Increased horizontal padding for larger buttons
+    borderRadius: 10,
+    alignItems: 'center',
+    marginVertical: 10, // Add spacing between buttons
   },
-  backButtonText: {
+  buttonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18, // Larger font size for button text
+    fontWeight: 'bold', // Bold text
   },
 });
 

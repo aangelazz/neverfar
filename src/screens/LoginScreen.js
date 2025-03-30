@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import * as ImagePicker from 'expo-image-picker';  // Make sure to install this
+import * as ImagePicker from 'expo-image-picker';
 import {
   initDatabase,
   authenticateUser,
@@ -172,11 +172,17 @@ export default function LoginScreen({ navigation }) {
                   {errors.password && touched.password && (<Text style={styles.errorText}>{errors.password}</Text>)}
                 </View>
 
-                <TouchableOpacity style={styles.button} onPress={handleSubmit}><Text style={styles.buttonText}>Login</Text></TouchableOpacity>
+                {/* Removed duplicate login button */}
+                <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                  <Text style={styles.buttonText}>Login</Text>
+                </TouchableOpacity>
 
                 <View style={styles.switchContainer}>
+                  {/* Removed duplicate "Don't have an account?" text and button */}
                   <Text style={styles.loginSwitchText}>Don't have an account?</Text>
-                  <TouchableOpacity onPress={() => setIsRegistering(true)}><Text style={styles.loginSwitchLink}>Register</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsRegistering(true)}>
+                    <Text style={styles.loginSwitchLink}>Register</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -187,22 +193,6 @@ export default function LoginScreen({ navigation }) {
               <View style={styles.registerContainer}>
                 <Image source={require('../../assets/images/registerTitle.png')} style={styles.registerTitleImage} resizeMode="contain" />
 
-                {[{ label: 'First Name', field: 'firstName' }, { label: 'Last Name', field: 'lastName' }, { label: 'Username', field: 'username' }, { label: 'Password', field: 'password', secure: true }, { label: 'Confirm Password', field: 'confirmPassword', secure: true }].map(({ label, field, secure }) => (
-                  <View key={field} style={styles.registerInputGroup}>
-                    <Text style={styles.label}>{label}</Text>
-                    <TextInput
-                      style={styles.registerInput}
-                      placeholder={`Enter your ${label.toLowerCase()}`}
-                      placeholderTextColor="#832161"
-                      value={values[field]}
-                      onChangeText={handleChange(field)}
-                      secureTextEntry={secure}
-                    />
-                    {errors[field] && touched[field] && (<Text style={styles.errorText}>{errors[field]}</Text>)}
-                  </View>
-                ))}
-
-                <TouchableOpacity style={styles.registerButton} onPress={handleSubmit}><Text style={styles.buttonText}>Register</Text></TouchableOpacity>
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>First Name</Text>
                   <TextInput
@@ -271,12 +261,12 @@ export default function LoginScreen({ navigation }) {
                   )}
                 </View>
 
-                <View style={styles.imagePickerContainer}>
-                  <Text style={styles.label}>Profile Picture <Text style={styles.requiredLabel}>(Required)</Text></Text>
-                  <TouchableOpacity onPress={pickImage} style={[
-                    styles.imagePicker,
-                    !profileImage && styles.imagePickerRequired // Add red border when no image is selected
-                  ]}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Profile Picture</Text>
+                  <TouchableOpacity 
+                    onPress={pickImage} 
+                    style={[styles.input, styles.imagePickerBox]}
+                  >
                     {profileImage ? (
                       <Image source={{ uri: profileImage }} style={styles.profilePreview} />
                     ) : (
@@ -285,13 +275,10 @@ export default function LoginScreen({ navigation }) {
                       </View>
                     )}
                   </TouchableOpacity>
-                  {!profileImage && (
-                    <Text style={styles.errorText}>Profile picture is required</Text>
-                  )}
                 </View>
 
                 <TouchableOpacity
-                  style={styles.button}
+                  style={[styles.button, { width: width * 0.5 }]}
                   onPress={() => {
                     setFormSubmitted(true);
                     if (!profileImage) {
@@ -309,7 +296,9 @@ export default function LoginScreen({ navigation }) {
 
                 <View style={styles.switchContainer}>
                   <Text style={styles.switchText}>Already have an account?</Text>
-                  <TouchableOpacity onPress={() => setIsRegistering(false)}><Text style={styles.registrationSwitchLink}>Login</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsRegistering(false)}>
+                    <Text style={styles.registrationSwitchLink}>Login</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -367,7 +356,8 @@ const styles = StyleSheet.create({
     marginBottom: 20
   },
   inputGroup: {
-    marginBottom: 16
+    marginBottom: 16,
+    width: width * 0.8,
   },
   registerInputGroup: {
     marginBottom: 16,
@@ -388,8 +378,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#bcd2ed',
     paddingHorizontal: 15,
     paddingVertical: 12,
-    borderBottomWidth: 2, // Add a bottom border
-    borderBottomColor: '#832161', // Set the color of the bottom border
+    borderRadius: 8,
+    width: '100%',
   },
   errorText: {
     fontSize: 12,
@@ -402,7 +392,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 20,
-    borderBottomWidth: 2, // Add a bottom border
+    borderBottomWidth: 2,
     borderBottomColor: '#832161',
   },
   registerButton: {
@@ -413,7 +403,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: width * 0.8,
   },
-
   buttonText: {
     color: '#832161',
     fontSize: 16,
@@ -423,19 +412,24 @@ const styles = StyleSheet.create({
     color: '#832161',
     fontSize: 16,
     fontWeight: '600',
-    borderBottomWidth: 2, // Add a bottom border
+    borderBottomWidth: 2,
     borderBottomColor: '#832161',
   },
   switchContainer: {
     alignItems: 'center',
     marginTop: 20,
-    borderWidth: 2, // Add a bottom border
+    borderWidth: 2,
     borderColor: '#832161',
     borderRadius: 70,
   },
   loginSwitchText: {
     color: '#52050A',
     backgroundColor: '#bcd2ee',
+    fontSize: 14
+  },
+  switchText: {
+    color: '#52050A',
+    backgroundColor: 'white',
     fontSize: 14
   },
   switchLink: {
@@ -457,7 +451,7 @@ const styles = StyleSheet.create({
   },
   registrationSwitchLink: {
     color: '#832161',
-    backgroundColor: 'white',
+    backgroundColor: '#BCD2ee',
     fontSize: 20,
     fontWeight: '500',
   },
@@ -485,33 +479,43 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#e1e1e1',
+    backgroundColor: '#bcd2ed',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#6366f1',
+    borderColor: '#bcd2ed',
   },
   profilePreview: {
     width: '100%',
     height: '100%',
+    resizeMode: 'cover',
   },
   imagePickerText: {
-    color: '#666',
-    textAlign: 'center',
-    padding: 10,
+    color: '#832161',
+    textAlign: 'left',
+    fontSize: 14,
+    paddingHorizontal: 0,
+    width: '100%',
   },
   imagePickerRequired: {
-    borderColor: '#ef4444', // Red border color
+    borderColor: '#ef4444',
   },
   imagePickerPlaceholder: {
     justifyContent: 'center',
     alignItems: 'center',
     height: '100%',
     width: '100%',
+    padding: 0,
   },
   requiredLabel: {
     color: '#ef4444',
     fontWeight: 'bold',
+  },
+  imagePickerBox: {
+    height: 48,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
