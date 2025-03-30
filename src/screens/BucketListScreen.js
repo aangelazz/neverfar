@@ -1,105 +1,178 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  Button, 
+  FlatList, 
+  StyleSheet, 
+  Alert,
+  TouchableOpacity 
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getBucketListIdeas } from '../utils/geminiAPI';
+import { getUserSession } from '../services/DatabaseService'; // Import to get current user
 
-export default function BucketListScreen({ navigation }) {
+export default function BucketListScreen({ navigation }) { // Add navigation prop here
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [userInput, setUserInput] = useState('');
   const [bucketList, setBucketList] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Generate a prompt using Gemini
   const generatePrompt = async () => {
     setLoading(true);
-    const { generatedPrompt } = await getBucketListIdeas();
-    setGeneratedPrompt(generatedPrompt);
-    setLoading(false);
+    try {
+      const { generatedPrompt } = await getBucketListIdeas();
+      setGeneratedPrompt(generatedPrompt);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to generate a prompt. Please try again.');
+      console.error('Error generating prompt:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const saveResponse = async () => {
-    if (!userInput.trim()) return;
+    if (!userInput.trim() || !currentUser) return;
 
-    const newList = [...bucketList, { prompt: generatedPrompt, response: userInput }];
-    setBucketList(newList);
-    setUserInput('');
-    await AsyncStorage.setItem('bucketList', JSON.stringify(newList));
+    try {
+      // Create a new bucket list item with user information
+      const newItem = {
+        userId: currentUser.userId,
+        username: currentUser.username,
+        firstName: currentUser.firstName, // Use firstName instead of name
+        prompt: generatedPrompt,
+        response: userInput,
+        timestamp: new Date().toISOString()
+      };
+
+      // Get all bucket list items from storage
+      const savedListStr = await AsyncStorage.getItem('bucketList');
+      const allBucketListItems = savedListStr ? JSON.parse(savedListStr) : [];
+
+      // Add new item to the list
+      const newAllList = [...allBucketListItems, newItem];
+      
+      // Save all items back to storage
+      await AsyncStorage.setItem('bucketList', JSON.stringify(newAllList));
+      
+      // Update state with only the current user's items
+      const userItems = newAllList.filter(item => item.userId === currentUser.userId);
+      setBucketList(userItems);
+      
+      // Clear input field
+      setUserInput('');
+      setGeneratedPrompt(''); // Optional: clear the prompt after saving
+    } catch (error) {
+      console.error('Failed to save response:', error);
+      Alert.alert('Error', 'Failed to save your response. Please try again.');
+    }
   };
 
+  // Load only the current user's bucket list items from AsyncStorage
   useEffect(() => {
     const loadBucketList = async () => {
+      if (!currentUser) return;
+      
       try {
-        const savedList = await AsyncStorage.getItem('bucketList');
-        if (savedList) {
-          setBucketList(JSON.parse(savedList));
+        const savedListStr = await AsyncStorage.getItem('bucketList');
+        if (savedListStr) {
+          const allItems = JSON.parse(savedListStr);
+          
+          // Filter items to only show those belonging to the current user
+          const userItems = allItems.filter(item => item.userId === currentUser.userId);
+          setBucketList(userItems);
         }
       } catch (error) {
         console.error('Failed to load bucket list:', error);
       }
     };
-    loadBucketList();
-  }, []);
+    
+    if (currentUser) {
+      loadBucketList();
+    }
+  }, [currentUser]); // Re-run when currentUser changes
 
-  const goToHome = () => {
-    navigation.navigate('Home');
-  };
+  if (!currentUser) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.header}>Please log in to use the Bucket List feature</Text>
+        <TouchableOpacity style={styles.backButton} onPress={goToHomeScreen}>
+          <Text style={styles.backButtonText}>Back to Start</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => navigation.navigate('Nav')}
-          >
-            <Text style={styles.menuButtonText}>🧭 Go to Menu</Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.title}>Bucket List Generator</Text>
-
-        <Button title="Generate a Prompt" onPress={generatePrompt} disabled={loading} />
-
-        <Text style={styles.prompt}>
-          {generatedPrompt || 'Click "Generate a Prompt" to get started!'}
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your response to the prompt..."
-          value={userInput}
-          onChangeText={setUserInput}
-          placeholderTextColor="#aaa"
-        />
-
-        <Button
-          title="Save Response"
-          onPress={saveResponse}
-          disabled={!generatedPrompt || !userInput.trim()}
-        />
-
-        {bucketList.length > 0 ? (
-          <>
-            <Text style={styles.sectionTitle}>Saved Prompts</Text>
-            {bucketList.map((item, index) => (
-              <View key={index} style={styles.listItem}>
-                <Text style={styles.promptText}>Prompt: {item.prompt}</Text>
-                <Text style={styles.responseText}>Response: {item.response}</Text>
-              </View>
-            ))}
-          </>
-        ) : (
-          <Text style={styles.emptyText}>Your saved prompts will appear here 📝</Text>
-        )}
+    <View style={styles.container}>
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>Bucket List Idea Generator</Text>
+        <TouchableOpacity style={styles.backButton} onPress={goToHomeScreen}>
+          <Text style={styles.backButtonText}>Back to Home</Text>
+        </TouchableOpacity>
       </View>
-    </ScrollView>
+      
+      <Text style={styles.username}>{currentUser.firstName}'s Bucket List Answers</Text>
+      
+      <Button 
+        title="Generate a Prompt" 
+        onPress={generatePrompt} 
+        disabled={loading} 
+      />
+
+      {loading ? (
+        <Text style={styles.prompt}>Generating an interesting prompt...</Text>
+      ) : (
+        <>
+          {/* Only show the prompt, textbox and save button when a prompt has been generated */}
+          {generatedPrompt ? (
+            <>
+              <Text style={styles.prompt}>{generatedPrompt}</Text>
+              
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your response to the prompt..."
+                value={userInput}
+                onChangeText={setUserInput}
+              />
+              
+              <Button 
+                title="Save Response" 
+                onPress={saveResponse} 
+                disabled={!userInput.trim()} 
+              />
+            </>
+          ) : (
+            <Text style={styles.prompt}>Click "Generate a Prompt" to get started!</Text>
+          )}
+        </>
+      )}
+      
+      <Text style={styles.listHeader}>
+        {bucketList.length > 0 
+          ? 'Your Bucket List Items:' 
+          : 'You have no bucket list items yet. Generate a prompt and save your response to create one!'}
+      </Text>
+      
+      <FlatList
+        data={bucketList}
+        keyExtractor={(item, index) => `${item.userId}-${index}`}
+        renderItem={({ item }) => (
+          <View style={styles.listItem}>
+            <Text style={styles.promptText}>Prompt: {item.prompt}</Text>
+            <Text style={styles.responseText}>Response: {item.response}</Text>
+            <Text style={styles.timestamp}>
+              {new Date(item.timestamp).toLocaleDateString()}
+            </Text>
+          </View>
+        )}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No bucket list items yet</Text>
+        }
+      />
+    </View>
   );
 }
 
@@ -111,33 +184,47 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 20,
+    backgroundColor: '#25292e',
   },
-  headerRow: {
+  headerContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-    marginBottom: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    position: 'relative',
   },
-  menuButton: {
-    backgroundColor: '#444',
-    padding: 8,
-    borderRadius: 6,
-  },
-  menuButtonText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-  title: {
-    fontSize: 22,
+  header: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 20,
+  },
+  backButton: {
+    position: 'absolute',
+    right: 0,
+    backgroundColor: '#6366f1',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+  },
+  backButtonText: {
+    color: 'white',
+    fontWeight: '500',
+  },
+  username: {
+    fontSize: 16,
+    color: '#4ade80',
+    textAlign: 'center',
+    marginBottom: 15,
   },
   prompt: {
     fontSize: 16,
     color: '#ffd33d',
     textAlign: 'center',
     marginVertical: 10,
+    padding: 10,
+    backgroundColor: 'rgba(255, 211, 61, 0.1)',
+    borderRadius: 5,
   },
   input: {
     backgroundColor: '#fff',
@@ -153,6 +240,20 @@ const styles = StyleSheet.create({
     color: '#ccc',
     textAlign: 'center',
   },
+  listHeader: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  listHeader: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 20,
+    marginBottom: 10,
+  },
   listItem: {
     marginTop: 10,
     padding: 12,
@@ -162,27 +263,21 @@ const styles = StyleSheet.create({
   promptText: {
     color: '#ffd33d',
     fontSize: 14,
+    marginBottom: 5,
   },
   responseText: {
     color: '#fff',
     fontSize: 16,
+    marginBottom: 5,
+  },
+  timestamp: {
+    color: '#aaa',
+    fontSize: 12,
+    textAlign: 'right',
   },
   emptyText: {
     color: '#aaa',
-    fontSize: 16,
     textAlign: 'center',
-    marginTop: 30,
-  },
-  headerButton: {
-    backgroundColor: '#6366f1',
-    padding: 10,
-    borderRadius: 5,
-    alignSelf: 'flex-start',
-    marginBottom: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+    marginTop: 20,
+  }
 });
