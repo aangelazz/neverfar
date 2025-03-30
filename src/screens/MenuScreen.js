@@ -206,6 +206,23 @@ export default function HomePage({ navigation }) {
           })}
         </View>
 
+        {/* Profile picture display */}
+        <View style={styles.profileImageContainer}>
+          {currentUser && currentUser.profileImage ? (
+            <Image 
+              source={{ uri: currentUser.profileImage }} 
+              style={styles.profileImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.profileImagePlaceholder}>
+              <Text style={styles.profileImagePlaceholderText}>
+                {currentUser && currentUser.firstName ? currentUser.firstName[0] + (currentUser.lastName ? currentUser.lastName[0] : '') : '?'}
+              </Text>
+            </View>
+          )}
+        </View>
+
         {/* Logout button */}
         <TouchableOpacity
           style={styles.logoutImageWrapper}
@@ -301,6 +318,33 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 5,
+  },
+  profileImageContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#bcd2ed',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#832161'
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
+  profileImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#bcd2ed',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileImagePlaceholderText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#832161',
   },
   logoutImageWrapper: {
     position: 'absolute',
