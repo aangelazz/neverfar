@@ -50,7 +50,9 @@ class MemoryDatabase {
       this.users.push({
         id: this.users.length > 0 ? Math.max(...this.users.map(u => u.id)) + 1 : 1,
         username: 'test',
-        password: 'password123'
+        password: 'password123',
+        firstName: 'Test', // Add firstName
+        lastName: 'User'   // Add lastName
       });
       this.saveData();
       console.log('Default test user added');
@@ -342,36 +344,41 @@ export const verifyCredentials = async (username, password) => {
   try {
     const user = await authenticateUser(username, password);
     
-    // Save session
-    await saveUserSession(user.id, user.username);
-    
-    return {
-      success: true,
-      user
-    };
+    if (user) {
+      console.log("User authenticated:", user);  // Debug the user object
+      
+      // Save user info in session with firstName explicitly
+      await saveUserSession(user.id, user.username, user.firstName);
+      return { success: true, user };
+    } else {
+      return { success: false, error: 'Invalid username or password' };
+    }
   } catch (error) {
-    return {
-      success: false,
-      error: error.message
-    };
+    console.log('Verification error:', error);
+    return { success: false, error: error.message };
   }
 };
 
 // Save user session - update to ensure persistence
-export const saveUserSession = async (userId, username) => {
+export const saveUserSession = async (userId, username, firstName = '') => {
+  console.log(`Saving session with firstName: ${firstName}`);
+  
   if (isWeb) {
     localStorage.setItem('user_id', userId.toString());
     localStorage.setItem('username', username);
+    localStorage.setItem('firstName', firstName || '');
     localStorage.setItem('isLoggedIn', 'true');
   } else {
     try {
       await AsyncStorage.setItem('user_id', userId.toString());
       await AsyncStorage.setItem('username', username);
+      await AsyncStorage.setItem('firstName', firstName || '');
       await AsyncStorage.setItem('isLoggedIn', 'true');
       
       // Also save in SecureStore as a backup
       await SecureStore.setItemAsync('user_id', userId.toString());
       await SecureStore.setItemAsync('username', username);
+      await SecureStore.setItemAsync('firstName', firstName || '');
       await SecureStore.setItemAsync('isLoggedIn', 'true');
     } catch (e) {
       console.log('Error saving session:', e);
@@ -384,28 +391,31 @@ export const saveUserSession = async (userId, username) => {
 // Get user session - update to check both AsyncStorage and SecureStore
 export const getUserSession = async () => {
   try {
-    let userId, username, isLoggedIn;
+    let userId, username, firstName, isLoggedIn;
     
     if (isWeb) {
       isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
       userId = localStorage.getItem('user_id');
       username = localStorage.getItem('username');
+      firstName = localStorage.getItem('firstName');
     } else {
       // Try AsyncStorage first
       isLoggedIn = await AsyncStorage.getItem('isLoggedIn') === 'true';
       userId = await AsyncStorage.getItem('user_id');
       username = await AsyncStorage.getItem('username');
+      firstName = await AsyncStorage.getItem('firstName');
       
       // If not found, try SecureStore as backup
       if (!isLoggedIn) {
         isLoggedIn = await SecureStore.getItemAsync('isLoggedIn') === 'true';
         userId = await SecureStore.getItemAsync('user_id');
         username = await SecureStore.getItemAsync('username');
+        firstName = await SecureStore.getItemAsync('firstName');
       }
     }
     
-    console.log('Current session:', { userId, username, isLoggedIn });
-    return { userId, username, isLoggedIn };
+    console.log("getUserSession returning:", { userId, username, firstName, isLoggedIn });
+    return { userId, username, firstName, isLoggedIn };
   } catch (error) {
     console.log('Error getting session:', error);
     return { isLoggedIn: false };
@@ -439,12 +449,7 @@ export const listAllUsers = async () => {
 
 // User registration
 export const registerUser = async (username, password, firstName = '', lastName = '') => {
-  console.log(`Registering user: ${username}`);
-  
-  if (!username || !password) {
-    console.log('Missing username or password');
-    return Promise.reject(new Error('Username and password are required'));
-  }
+  console.log(`Registering user with firstName: ${firstName}`);
   
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
@@ -454,26 +459,23 @@ export const registerUser = async (username, password, firstName = '', lastName 
         [username],
         (_, { rows }) => {
           if (rows.length > 0) {
-            console.log('Username already exists');
             reject(new Error('Username already exists'));
           } else {
-            // Insert new user
+            // Insert new user WITH firstName and lastName
             tx.executeSql(
-              'INSERT INTO users (username, password) VALUES (?, ?)',
-              [username, password],
+              'INSERT INTO users (username, password, firstName, lastName) VALUES (?, ?, ?, ?)',
+              [username, password, firstName, lastName],
               (_, { insertId }) => {
-                console.log('User registered successfully, ID:', insertId);
+                console.log('User registered with ID and firstName:', insertId, firstName);
                 resolve(insertId);
               },
               (_, error) => {
-                console.log('Error inserting user:', error);
                 reject(error);
               }
             );
           }
         },
         (_, error) => {
-          console.log('Error checking username:', error);
           reject(error);
         }
       );

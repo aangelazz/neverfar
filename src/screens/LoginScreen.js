@@ -21,7 +21,8 @@ import {
   verifyCredentials,
   listAllUsers,
   clearAllSessions,
-  getUserSession
+  getUserSession,
+  saveUserSession
 } from '../services/DatabaseService';
 
 // Validation schemas
@@ -49,8 +50,7 @@ const RegisterSchema = Yup.object().shape({
 export default function LoginScreen({ navigation }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRegistering, setIsRegistering] = useState(false);
-  // Remove the debug state variable
-  // const [debug, setDebug] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const setup = async () => {
@@ -65,13 +65,14 @@ export default function LoginScreen({ navigation }) {
         
         if (session.isLoggedIn) {
           console.log('Found existing session, navigating to Menu');
+          setCurrentUser({
+            userId: session.userId,
+            username: session.username,
+            firstName: session.firstName || session.username // Store as firstName instead of name
+          });
           navigation.replace('Menu');
           return;
         }
-        
-        // Remove debug output
-        // const users = await listAllUsers();
-        // setDebug(`Found ${users.length} users. Test user exists: ${!!users.find(u => u.username === 'test')}`);
         
       } catch (error) {
         console.error('Setup error:', error);
@@ -108,6 +109,9 @@ export default function LoginScreen({ navigation }) {
         values.firstName,
         values.lastName
       );
+      
+      // Store the firstName right after registration
+      await saveUserSession(userId, values.username, values.firstName);
       
       Alert.alert(
         'Registration Successful',
@@ -151,8 +155,6 @@ export default function LoginScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.logoContainer}>
           <Text style={styles.logoText}>NeverFar</Text>
-          {/* Remove the debug text here */}
-          {/* <Text style={{color: 'gray', fontSize: 12}}>{debug}</Text> */}
         </View>
 
         {!isRegistering ? (
@@ -310,19 +312,6 @@ export default function LoginScreen({ navigation }) {
             )}
           </Formik>
         )}
-        
-        {/* Remove the Reset Database button */}
-        {/* <TouchableOpacity
-          style={[styles.button, {backgroundColor: '#ff6347', marginTop: 20}]}
-          onPress={resetDatabase}
-        >
-          <Text style={styles.buttonText}>Reset Database</Text>
-        </TouchableOpacity> */}
-        
-        {/* Remove the default login text */}
-        {/* <Text style={{textAlign: 'center', marginTop: 20, color: '#666'}}>
-          Default login: test/password123
-        </Text> */}
       </ScrollView>
     </KeyboardAvoidingView>
   );
