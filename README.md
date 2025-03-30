@@ -1,4 +1,4 @@
-# Welcome to your Expo app: NeverFar - Stay Connected with Friends
+# Expo Application: NeverFar - Stay Connected with Friends
 
 NeverFar is a React Native mobile application built with Expo that helps you stay connected with friends through photo sharing and interactive features. The app provides a simple and intuitive interface for maintaining friendships, no matter the distance.
 
