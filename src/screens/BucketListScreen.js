@@ -18,6 +18,47 @@ export default function BucketListScreen({ navigation }) { // Add navigation pro
   const [userInput, setUserInput] = useState('');
   const [bucketList, setBucketList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // First, load the current user session when component mounts
+  useEffect(() => {
+    const loadUserSession = async () => {
+      try {
+        const session = await getUserSession();
+        console.log("Session:", session);  // Debug the session
+        
+        if (session && session.isLoggedIn) {
+          // Make sure we store firstName correctly
+          setCurrentUser({
+            userId: session.userId,
+            username: session.username,
+            firstName: session.firstName || session.username // Store firstName explicitly
+          });
+          console.log("Set currentUser:", {
+            userId: session.userId,
+            username: session.username,
+            firstName: session.firstName || session.username
+          });
+        } else {
+          // Handle case where user is not logged in
+          Alert.alert('Authentication Required', 'Please log in to use the Bucket List feature');
+        }
+      } catch (error) {
+        console.error('Failed to get user session:', error);
+      }
+    };
+    
+    loadUserSession();
+  }, []);
+
+  // Add a debug output temporarily to check what currentUser contains
+  useEffect(() => {
+    console.log("currentUser updated:", currentUser);
+  }, [currentUser]);
+
+  const goToHomeScreen = () => {
+    navigation.navigate('Menu'); // Navigate to the Menu/Home screen
+  };
 
   // Generate a prompt using Gemini
   const generatePrompt = async () => {
@@ -33,6 +74,7 @@ export default function BucketListScreen({ navigation }) { // Add navigation pro
     }
   };
 
+  // Save the user's response to the bucket list
   const saveResponse = async () => {
     if (!userInput.trim() || !currentUser) return;
 
@@ -177,12 +219,8 @@ export default function BucketListScreen({ navigation }) { // Add navigation pro
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-    backgroundColor: '#25292e',
-    justifyContent: 'center',
-  },
   container: {
+    flex: 1,
     padding: 20,
     backgroundColor: '#25292e',
   },
@@ -228,23 +266,8 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
-    fontSize: 16,
-  },
-  sectionTitle: {
-    marginTop: 20,
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ccc',
-    textAlign: 'center',
-  },
-  listHeader: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginTop: 20,
+    padding: 10,
+    borderRadius: 5,
     marginBottom: 10,
   },
   listHeader: {
@@ -255,10 +278,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   listItem: {
-    marginTop: 10,
-    padding: 12,
+    marginBottom: 10,
+    padding: 10,
     backgroundColor: '#333',
-    borderRadius: 8,
+    borderRadius: 5,
   },
   promptText: {
     color: '#ffd33d',
