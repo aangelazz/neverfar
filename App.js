@@ -13,6 +13,8 @@ import NavScreen from './src/screens/NavScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
 import ViewCalendarScreen from './src/screens/ViewCalendarScreen';
 import PhotoGalleryScreen from './src/screens/PhotoGalleryScreen';
+import StarJarScreen from './src/screens/StarJarScreen';
+import AllNotesScreen from './src/screens/AllNotesScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -101,6 +103,14 @@ export default function App() {
         <Stack.Screen 
           name="PhotoGallery" 
           component={PhotoGalleryScreen} 
+        />
+        <Stack.Screen 
+          name="StarJar" 
+          component={StarJarScreen} 
+        />
+        <Stack.Screen 
+          name="AllNotes" 
+          component={AllNotesScreen} 
         />
       </Stack.Navigator>
     </NavigationContainer>

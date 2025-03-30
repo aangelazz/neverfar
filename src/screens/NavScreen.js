@@ -22,6 +22,10 @@ const NavScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Calendar')}>
         <Text style={styles.buttonText}>together time!</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('StarJar')}>
+        <Text style={styles.buttonText}>star jar</Text>
+      </TouchableOpacity>
     </ImageBackground>
   );
 };
