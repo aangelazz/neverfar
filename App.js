@@ -9,6 +9,7 @@ import CameraScreen from './src/screens/CameraScreen';
 import MenuScreen from './src/screens/MenuScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import BucketListScreen from './src/screens/BucketListScreen';
+import NavScreen from './src/screens/NavScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
 import ViewCalendarScreen from './src/screens/ViewCalendarScreen';
 
@@ -39,7 +40,15 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator initialRouteName="Login" screenOptions={{
+          gestureEnabled: false,
+          cardStyleInterpolator: ({ current, next, layouts }) => ({
+          cardStyle: {
+            opacity: current.progress,
+          },
+          }),
+        }}
+      >
         <Stack.Screen 
           name="Login" 
           component={LoginScreen} 
@@ -48,6 +57,11 @@ export default function App() {
         <Stack.Screen 
           name="Home" 
           component={HomeScreen} 
+          options={{ title: 'NeverFar' }}
+        />
+        <Stack.Screen 
+          name="Nav" 
+          component={NavScreen} 
           options={{ title: 'NeverFar' }}
         />
         <Stack.Screen 
@@ -68,6 +82,11 @@ export default function App() {
         <Stack.Screen 
           name="Tabs" 
           component={TabNavigator} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="Bucket" 
+          component={BucketListScreen} 
           options={{ headerShown: false }}
         />
         <Stack.Screen 
