@@ -9,6 +9,8 @@ import CameraScreen from './src/screens/CameraScreen';
 import MenuScreen from './src/screens/MenuScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import BucketListScreen from './src/screens/BucketListScreen';
+import CalendarScreen from './src/screens/CalendarScreen';
+import ViewCalendarScreen from './src/screens/ViewCalendarScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -37,7 +39,7 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator initialRouteName="Home">
         <Stack.Screen 
           name="Login" 
           component={LoginScreen} 
@@ -67,6 +69,14 @@ export default function App() {
           name="Tabs" 
           component={TabNavigator} 
           options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="Calendar" 
+          component={CalendarScreen} 
+        />
+        <Stack.Screen 
+          name="ViewCalendar" 
+          component={ViewCalendarScreen} 
         />
       </Stack.Navigator>
     </NavigationContainer>

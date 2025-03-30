@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, Button } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function HomeScreen({ navigation }) {
@@ -34,7 +34,6 @@ export default function HomeScreen({ navigation }) {
     );
   }
 
-
   const goToCamera = () => {
     navigation.navigate('Camera');
   };
@@ -52,13 +51,14 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container}
-    contentContainerStyle={{ paddingBottom: 60 }}
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer} // Apply layout styles here
     >
       <View style={styles.header}>
-      <TouchableOpacity style={styles.headerButton} onPress={goToMenu}>
+        <TouchableOpacity style={styles.headerButton} onPress={goToMenu}>
           <Text style={styles.buttonText}>🧭 Go to Menu</Text>
-      </TouchableOpacity>
+        </TouchableOpacity>
         <Text style={styles.title}>Your Widget</Text>
         <View style={styles.headerButtons}>
           <TouchableOpacity onPress={goToFriends}>
@@ -83,16 +83,22 @@ export default function HomeScreen({ navigation }) {
       <TouchableOpacity style={styles.cameraButton} onPress={goToCamera}>
         <Text style={styles.buttonText}>📷 Update Widget</Text>
       </TouchableOpacity>
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('TestCamera')}>
+        onPress={() => navigation.navigate('TestCamera')}
+      >
         <Text>Test Simple Camera</Text>
       </TouchableOpacity>
 
+      <Button
+        title="Go to Calendar"
+        onPress={() => navigation.navigate('Calendar')}
+      />
+
       <Text style={styles.sectionTitle}>Friend Updates</Text>
 
-      {friendUpdates.map(friend => (
+      {friendUpdates.map((friend) => (
         <View key={friend.id} style={styles.friendUpdate}>
           <Image source={{ uri: friend.image }} style={styles.friendAvatar} />
           <View style={styles.friendInfo}>
@@ -119,7 +125,13 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#D282A6',
+    backgroundColor: '#25292e',
+  },
+  contentContainer: {
+    flexGrow: 1, // Ensures the ScrollView content takes up the full height
+    justifyContent: 'flex-end', // Move the button to the bottom
+    alignItems: 'center',
+    paddingBottom: 20, // Add some padding at the bottom
   },
   header: {
     flexDirection: 'row',

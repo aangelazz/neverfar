@@ -1,23 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getBucketListIdeas } from '../utils/geminiAPI'; // Use the imported function
+import { getBucketListIdeas } from '../utils/geminiAPI';
 
-export default function BucketListScreen() {
+export default function BucketListScreen({ navigation }) {
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [userInput, setUserInput] = useState('');
   const [bucketList, setBucketList] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Generate a prompt using Gemini
   const generatePrompt = async () => {
     setLoading(true);
-    const { generatedPrompt } = await getBucketListIdeas(); // Call the imported function
+    const { generatedPrompt } = await getBucketListIdeas();
     setGeneratedPrompt(generatedPrompt);
     setLoading(false);
   };
 
-  // Save the user's response to the bucket list
   const saveResponse = async () => {
     if (!userInput.trim()) return;
 
@@ -25,11 +23,9 @@ export default function BucketListScreen() {
     setBucketList(newList);
     setUserInput('');
 
-    // Save the updated bucket list to AsyncStorage
     await AsyncStorage.setItem('bucketList', JSON.stringify(newList));
   };
 
-  // Load bucket list from AsyncStorage on component mount
   useEffect(() => {
     const loadBucketList = async () => {
       try {
@@ -44,8 +40,15 @@ export default function BucketListScreen() {
     loadBucketList();
   }, []);
 
+  const goToHome = () => {
+    navigation.navigate('Home');
+  };
+
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.headerButton} onPress={goToHome}>
+        <Text style={styles.buttonText}> Home</Text>
+      </TouchableOpacity>
       <Text style={styles.header}>Bucket List Generator</Text>
       <Button title="Generate a Prompt" onPress={generatePrompt} disabled={loading} />
       <Text style={styles.prompt}>{generatedPrompt || 'Click "Generate a Prompt" to get started!'}</Text>
@@ -108,5 +111,17 @@ const styles = StyleSheet.create({
   responseText: {
     color: '#fff',
     fontSize: 16,
+  },
+  headerButton: {
+    backgroundColor: '#6366f1',
+    padding: 10,
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

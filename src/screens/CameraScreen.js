@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
-import { Camera, CameraType } from 'expo-camera';
+import { Camera } from 'expo-camera';
 
 export default function CameraScreen({ navigation }) {
   const [hasPermission, setHasPermission] = useState(null);
   const [cameraReady, setCameraReady] = useState(false);
-  const [type, setType] = useState(CameraType.back);
+  const [type, setType] = useState('back'); // Default to the back camera
   const [capturedImage, setCapturedImage] = useState(null);
   const cameraRef = useRef(null);
 
@@ -37,10 +37,13 @@ export default function CameraScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <Text>We need camera permissions to make this app work!</Text>
-        <TouchableOpacity style={styles.button} onPress={async () => {
-          const { status } = await Camera.requestCameraPermissionsAsync();
-          setHasPermission(status === 'granted');
-        }}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={async () => {
+            const { status } = await Camera.requestCameraPermissionsAsync();
+            setHasPermission(status === 'granted');
+          }}
+        >
           <Text style={styles.buttonText}>Grant Permission</Text>
         </TouchableOpacity>
       </View>
@@ -80,7 +83,10 @@ export default function CameraScreen({ navigation }) {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.buttonText}>Back</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setType(type === CameraType.back ? CameraType.front : CameraType.back)} style={styles.flipButton}>
+          <TouchableOpacity
+            onPress={() => setType(type === 'back' ? 'front' : 'back')}
+            style={styles.flipButton}
+          >
             <Text style={styles.buttonText}>Flip</Text>
           </TouchableOpacity>
         </View>
@@ -177,5 +183,5 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: '#6366f1',
-  }
+  },
 });
