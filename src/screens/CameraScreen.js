@@ -198,7 +198,7 @@ export default function CameraScreen({ navigation }) {
             style={styles.button}
             onPress={() => navigation.navigate('Nav')}
           >
-            <Text style={styles.buttonText}>Go Back</Text>
+            <Text style={styles.buttonText}>Go Back To Navigation</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -241,39 +241,40 @@ export default function CameraScreen({ navigation }) {
   return (
     <SafeAreaView style={[styles.container, styles.centered]}>
       <Text style={styles.header}>Capture a Moment</Text>
-      
+
       <View style={styles.optionsContainer}>
+        {/* Take Photo Button */}
         <TouchableOpacity
           style={[styles.button, styles.primaryButton, styles.fullWidthButton]}
           onPress={useSystemCamera}
         >
           <Text style={styles.buttonText}>Take Photo</Text>
         </TouchableOpacity>
-        
+
+        {/* Choose from Gallery Button */}
         <TouchableOpacity
-          style={[styles.button, styles.fullWidthButton, { marginTop: 15 }]}
+          style={[styles.galleryButton, styles.fullWidthButton]}
           onPress={pickImage}
         >
           <Text style={styles.buttonText}>Choose from Gallery</Text>
         </TouchableOpacity>
-        
+
+        {/* Go Back Button */}
         <TouchableOpacity
-          style={[styles.button, styles.fullWidthButton, { marginTop: 15, backgroundColor: '#555' }]}
+          style={styles.goBackButton}
           onPress={() => navigation.navigate('Nav')}
         >
-          <Text style={styles.buttonText}>Go Back</Text>
+          <Text style={styles.goBackButtonText}>Go Back</Text>
         </TouchableOpacity>
       </View>
-      
-      {/* Add this gallery button */}
-      {!capturedImage && (
-        <TouchableOpacity
-          style={styles.galleryButton}
-          onPress={() => navigation.navigate('PhotoGallery')}
-        >
-          <Text style={styles.galleryButtonText}>View Gallery</Text>
-        </TouchableOpacity>
-      )}
+
+      {/* View Gallery Button */}
+      <TouchableOpacity
+        style={styles.galleryButton}
+        onPress={() => navigation.navigate('PhotoGallery')}
+      >
+        <Text style={styles.galleryButtonText}>View Gallery</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -281,7 +282,7 @@ export default function CameraScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#467498', // Screen background color
   },
   centered: {
     justifyContent: 'center',
@@ -339,11 +340,33 @@ const styles = StyleSheet.create({
     width: '48%',
   },
   primaryButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#832161', // Take Photo button background color
+  },
+  goBackButton: {
+    backgroundColor: '#bcd2ed', // Go Back button background color
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    width: '100%',
+    marginTop: 15,
+  },
+  goBackButtonText: {
+    color: '#d282a6', // Updated Go Back button text color
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  galleryButton: {
+    backgroundColor: 'transparent', // Updated Choose from Gallery button background to transparent
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    width: '100%',
+    marginTop: 15,
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
+    fontWeight: 'bold', // Make the button text bold
   },
   captionContainer: {
     position: 'absolute',
@@ -357,16 +380,6 @@ const styles = StyleSheet.create({
     padding: 15,
     color: 'white',
     fontSize: 16,
-  },
-  galleryButton: {
-    position: 'absolute',
-    bottom: 100, // Position above the camera controls
-    alignSelf: 'center', // Center horizontally
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    zIndex: 10,
   },
   galleryButtonText: {
     color: '#fff',

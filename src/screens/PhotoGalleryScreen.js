@@ -327,7 +327,7 @@ export default function PhotoGalleryScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#d282a6', // Updated background color to #832161
     padding: 10,
   },
   header: {
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
-    backgroundColor: '#333',
+    backgroundColor: '#832161',
     borderRadius: 5,
   },
   backButtonText: {
