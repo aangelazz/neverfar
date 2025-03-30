@@ -41,7 +41,8 @@
       ],
       "expo-image-picker",
       "expo-sqlite",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font"
     ],
     "sdkVersion": "52.0.0",
     "newArchEnabled": true

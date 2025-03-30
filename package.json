@@ -52,7 +52,8 @@
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.6",
     "typescript": "^5.8.2",
-    "yup": "^1.6.1"
+    "yup": "^1.6.1",
+    "expo-font": "~13.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
