@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -13,6 +13,7 @@ import {
   Modal
 } from 'react-native';
 import { getUserSession, getUserPhotos, deleteUserPhoto } from '../services/DatabaseService';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const { width } = Dimensions.get('window');
 
@@ -25,6 +26,21 @@ export default function PhotoGalleryScreen({ navigation, route }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  
+  // Move the useLayoutEffect inside the component
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity 
+          style={styles.headerButton}
+          onPress={() => navigation.navigate('Nav')} // Navigate to Nav instead of Camera
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Text style={styles.headerButtonText}>Back</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
   
   // Load user session and photos
   useEffect(() => {
@@ -161,7 +177,7 @@ export default function PhotoGalleryScreen({ navigation, route }) {
         </Text>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.navigate('Nav')} // Navigate directly to Nav instead of goBack()
+          onPress={() => navigation.navigate('Nav')} // Navigate to Nav instead of Camera
         >
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -402,5 +418,17 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     marginTop: 0,
+  },
+  headerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: '#333',
+    borderRadius: 5,
+  },
+  headerButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 5,
   }
 });

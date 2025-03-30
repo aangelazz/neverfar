@@ -48,10 +48,8 @@ const NavScreen = ({ navigation }) => {
         <Text style={styles.buttonText}>together time!</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('PhotoGallery')}>
-        <Text style={styles.buttonText}>photo gallery</Text>
-      </TouchableOpacity>
-
+      {/* Remove the Photo Gallery button from here */}
+      
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('StarJar')}>
         <Text style={styles.buttonText}>star jar</Text>
       </TouchableOpacity>

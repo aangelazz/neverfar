@@ -132,7 +132,7 @@ export default function CameraScreen({ navigation }) {
     useSystemCamera();
   };
 
-  // Update the saveAndGoBack function in your CameraScreen component
+  // Update the saveAndGoBack function
 
   const saveAndGoBack = async () => {
     if (!capturedImage) {
@@ -160,12 +160,9 @@ export default function CameraScreen({ navigation }) {
       
       console.log(`Photo saved with ID: ${photoId}`);
       
-      // Navigate to NavScreen instead of Menu
-      Alert.alert(
-        'Photo Saved!', 
-        'Your photo has been saved to your gallery',
-        [{ text: 'OK', onPress: () => navigation.navigate('Nav') }]
-      );
+      // Navigate directly to PhotoGallery without showing an alert
+      navigation.navigate('PhotoGallery');
+      
     } catch (err) {
       console.error('Error saving photo:', err);
       Alert.alert('Error', 'Failed to save your photo: ' + err.message);
@@ -267,6 +264,16 @@ export default function CameraScreen({ navigation }) {
           <Text style={styles.buttonText}>Go Back</Text>
         </TouchableOpacity>
       </View>
+      
+      {/* Add this gallery button */}
+      {!capturedImage && (
+        <TouchableOpacity
+          style={styles.galleryButton}
+          onPress={() => navigation.navigate('PhotoGallery')}
+        >
+          <Text style={styles.galleryButtonText}>View Gallery</Text>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -350,5 +357,20 @@ const styles = StyleSheet.create({
     padding: 15,
     color: 'white',
     fontSize: 16,
+  },
+  galleryButton: {
+    position: 'absolute',
+    bottom: 100, // Position above the camera controls
+    alignSelf: 'center', // Center horizontally
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    zIndex: 10,
+  },
+  galleryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
