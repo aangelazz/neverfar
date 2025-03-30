@@ -66,9 +66,9 @@ export default function HomePage({ navigation }) {
 
         <TouchableOpacity 
           style={styles.homeButton}
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => navigation.navigate('Nav')}
         >
-          <Text style={styles.buttonText}>Go to Home</Text>
+          <Text style={styles.buttonText}>Go to Nav</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
