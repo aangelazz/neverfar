@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import AddStarJarScreen from '../components/AddStarJarScreen';
 
-export default function StarJarScreen() {
+export default function StarJarScreen({ navigation }) {
   // Mock data for notes
   const [notes, setNotes] = useState([
     { id: '1', note: 'Happy Birthday!', date: '2025-04-01', friend: 'Alice' },
@@ -13,6 +14,15 @@ export default function StarJarScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Star Jar Notes</Text>
       <Text style={styles.subtitle}>All Notes (Upcoming and My StarJar)</Text>
+      
+      {/* Button to navigate to AddStarJarScreen */}
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => navigation.navigate('AddStarJar')}
+      >
+        <Text style={styles.addButtonText}>+ Add StarJar Note</Text>
+      </TouchableOpacity>
+
       <FlatList
         data={notes}
         keyExtractor={(item) => item.id}
@@ -46,6 +56,19 @@ const styles = StyleSheet.create({
     color: '#aaa',
     marginBottom: 20,
     textAlign: 'center',
+  },
+  addButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   noteCard: {
     backgroundColor: '#333',
