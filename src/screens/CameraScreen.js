@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -20,24 +20,40 @@ export default function CameraScreen({ navigation }) {
   const [caption, setCaption] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   
+  // Move the useLayoutEffect inside the component
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity 
+          style={{ marginLeft: 15 }}
+          onPress={() => navigation.navigate('Nav')}
+        >
+          <Text style={{ color: '#fff', fontSize: 16 }}>Cancel</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+  
   // Load user session when component mounts
   useEffect(() => {
     const loadUserSession = async () => {
       try {
         const session = await getUserSession();
+        console.log("Camera: User session loaded:", session);
         if (session && session.isLoggedIn) {
           setCurrentUser({
             userId: session.userId,
             username: session.username,
             firstName: session.firstName
           });
+          console.log("Camera: Current user set:", session.userId);
         } else {
-          // Handle case where user is not logged in
-          Alert.alert('Authentication Required', 'Please log in to use the Camera feature');
+          console.log("Camera: No active user session");
+          Alert.alert('Login Required', 'Please login to use the camera');
           navigation.navigate('Login');
         }
       } catch (error) {
-        console.error('Failed to get user session:', error);
+        console.error('Failed to load user session:', error);
       }
     };
     
@@ -116,34 +132,45 @@ export default function CameraScreen({ navigation }) {
     useSystemCamera();
   };
 
-  // Save image and navigate back
+  // Update the saveAndGoBack function in your CameraScreen component
+
   const saveAndGoBack = async () => {
-    if (capturedImage && currentUser) {
-      setLoading(true);
-      try {
-        // Save the photo to the database
-        const photoId = await saveUserPhoto(
-          currentUser.userId, 
-          capturedImage,
-          caption // Optional caption
-        );
-        
-        // Navigate back with success message
-        navigation.navigate('Menu', { 
-          photoSaved: true,
-          photoId: photoId,
-          message: 'Photo saved to your collection!' 
-        });
-      } catch (err) {
-        console.error('Error saving photo:', err);
-        Alert.alert('Error', 'Failed to save your photo. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    } else if (!currentUser) {
-      Alert.alert('Error', 'You need to be logged in to save photos');
-    } else {
+    if (!capturedImage) {
       Alert.alert('Error', 'No image captured');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Get current user session
+      const session = await getUserSession();
+      if (!session || !session.isLoggedIn) {
+        Alert.alert('Error', 'You need to be logged in to save photos');
+        return;
+      }
+      
+      console.log(`Saving photo for user ${session.userId}`);
+      
+      // Save to database
+      const photoId = await saveUserPhoto(
+        session.userId, 
+        capturedImage,
+        caption || '' // Use caption if it exists
+      );
+      
+      console.log(`Photo saved with ID: ${photoId}`);
+      
+      // Navigate to NavScreen instead of Menu
+      Alert.alert(
+        'Photo Saved!', 
+        'Your photo has been saved to your gallery',
+        [{ text: 'OK', onPress: () => navigation.navigate('Nav') }]
+      );
+    } catch (err) {
+      console.error('Error saving photo:', err);
+      Alert.alert('Error', 'Failed to save your photo: ' + err.message);
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -172,7 +199,7 @@ export default function CameraScreen({ navigation }) {
           
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('Nav')}
           >
             <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
@@ -235,7 +262,7 @@ export default function CameraScreen({ navigation }) {
         
         <TouchableOpacity
           style={[styles.button, styles.fullWidthButton, { marginTop: 15, backgroundColor: '#555' }]}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate('Nav')}
         >
           <Text style={styles.buttonText}>Go Back</Text>
         </TouchableOpacity>

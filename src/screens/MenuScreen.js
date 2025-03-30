@@ -162,14 +162,6 @@ export default function HomePage({ navigation }) {
             resizeMode="contain"
           />
         </TouchableOpacity>
-
-        {/* Add this to your menu options */}
-        <TouchableOpacity
-          style={[styles.menuItem, { backgroundColor: '#6366f1' }]}
-          onPress={() => navigation.navigate('PhotoGallery')}
-        >
-          <Text style={styles.menuItemText}>My Photos</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );

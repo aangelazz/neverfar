@@ -13,6 +13,7 @@ import NavScreen from './src/screens/NavScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
 import ViewCalendarScreen from './src/screens/ViewCalendarScreen';
 import PhotoGalleryScreen from './src/screens/PhotoGalleryScreen';
+import { initDatabase } from './src/services/DatabaseService';
 import StarJarScreen from './src/screens/StarJarScreen';
 import AllNotesScreen from './src/screens/AllNotesScreen';
 
@@ -38,7 +39,18 @@ function TabNavigator() {
 export default function App() {
   useEffect(() => {
     console.log('App mounted');
-    console.log('HomeScreen exists:', !!HomeScreen);
+    
+    // Initialize database on app start
+    const setupDatabase = async () => {
+      try {
+        await initDatabase();
+        console.log("Database initialized successfully");
+      } catch (error) {
+        console.error("Database initialization failed:", error);
+      }
+    };
+    
+    setupDatabase();
   }, []);
 
   return (
@@ -103,6 +115,7 @@ export default function App() {
         <Stack.Screen 
           name="PhotoGallery" 
           component={PhotoGalleryScreen} 
+          options={{ headerShown: false }}
         />
         <Stack.Screen 
           name="StarJar" 

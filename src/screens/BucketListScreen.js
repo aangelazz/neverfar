@@ -140,8 +140,8 @@ export default function BucketListScreen({ navigation }) { // Add navigation pro
     return (
       <View style={styles.container}>
         <Text style={styles.header}>Please log in to use the Bucket List feature</Text>
-        <TouchableOpacity style={styles.backButton} onPress={goToHomeScreen}>
-          <Text style={styles.backButtonText}>Back to Start</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Nav')}>
+          <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -151,8 +151,8 @@ export default function BucketListScreen({ navigation }) { // Add navigation pro
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.header}>Bucket List Idea Generator</Text>
-        <TouchableOpacity style={styles.backButton} onPress={goToHomeScreen}>
-          <Text style={styles.backButtonText}>Back to Home</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Nav')}>
+          <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
       </View>
       
