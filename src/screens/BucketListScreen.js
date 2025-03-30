@@ -7,11 +7,15 @@ import {
   FlatList, 
   StyleSheet, 
   Alert,
-  TouchableOpacity 
+  TouchableOpacity,
+  ImageBackground, 
+  Dimensions
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getBucketListIdeas } from '../utils/geminiAPI';
 import { getUserSession } from '../services/DatabaseService'; // Import to get current user
+
+const { width } = Dimensions.get('window');
 
 export default function BucketListScreen({ navigation }) { // Add navigation prop here
   const [generatedPrompt, setGeneratedPrompt] = useState('');
@@ -148,21 +152,26 @@ export default function BucketListScreen({ navigation }) { // Add navigation pro
   }
 
   return (
-    <View style={styles.container}>
+    <ImageBackground
+      source={require('../../assets/images/bucketBackground.png')} // Set the background image
+      style={styles.background} // Use the background style
+    >
+<View style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.header}>Bucket List Idea Generator</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Nav')}>
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
       </View>
       
-      <Text style={styles.username}>{currentUser.firstName}'s Bucket List Answers</Text>
+      <Text style={styles.username}>{currentUser.firstName}</Text>
       
-      <Button 
-        title="Generate a Prompt" 
-        onPress={generatePrompt} 
-        disabled={loading} 
-      />
+      <TouchableOpacity
+        style={[styles.button, loading && styles.disabledButton]} // Apply styles and a disabled style if loading
+        onPress={generatePrompt}
+        disabled={loading} // Disable the button when loading
+      >
+        <Text style={styles.buttonText}>Generate a Prompt</Text>
+      </TouchableOpacity>
 
       {loading ? (
         <Text style={styles.prompt}>Generating an interesting prompt...</Text>
@@ -180,15 +189,15 @@ export default function BucketListScreen({ navigation }) { // Add navigation pro
                 onChangeText={setUserInput}
               />
               
-              <Button 
-                title="Save Response" 
-                onPress={saveResponse} 
-                disabled={!userInput.trim()} 
-              />
+              <TouchableOpacity
+                style={[styles.saveButton, !userInput.trim() && styles.disabledButton]} // Apply styles and a disabled style if input is empty
+                onPress={saveResponse}
+                disabled={!userInput.trim()} // Disable the button if input is empty
+              >
+                <Text style={styles.saveButtonText}>Save Response</Text>
+              </TouchableOpacity>
             </>
-          ) : (
-            <Text style={styles.prompt}>Click "Generate a Prompt" to get started!</Text>
-          )}
+          ) : null}
         </>
       )}
       
@@ -215,15 +224,23 @@ export default function BucketListScreen({ navigation }) { // Add navigation pro
         }
       />
     </View>
+    </ImageBackground>
+    
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    resizeMode: 'cover', // Ensures the image covers the entire screen
+  },
   container: {
     flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 20,
     paddingTop: 40, // Add padding to the top to shift the screen down slightly
-    backgroundColor: '#d282a6',
   },
   headerContainer: {
     flexDirection: 'row',
@@ -238,59 +255,85 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
   },
+  button: {
+    backgroundColor: 'rgba(188, 210, 238,0.7)', // Light blue background
+    paddingVertical: 12, // Vertical padding
+    paddingHorizontal: 20, // Horizontal padding
+    alignItems: 'center', // Center the text
+    marginVertical: 10, // Add vertical spacing
+  },
+  
+  buttonText: {
+    color: '#52050A', // Dark red text color
+    fontSize: 16, // Font size
+    fontWeight: 'bold', // Bold text
+  },
+  
+  disabledButton: {
+    backgroundColor: '#d3d3d3', // Gray background when disabled
+  },
   backButton: {
-    position: 'absolute',
-    right: 0,
-    backgroundColor: '#6366f1',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
+    position: 'absolute', // Position the button absolutely
+    top: width*0.04, // Distance from the top of the screen
+    left: width*0.3, // Distance from the left of the screen
+    backgroundColor: '#832161', // Keep the background color
+    paddingVertical: 8, // Vertical padding
+    paddingHorizontal: 12, // Horizontal padding
   },
   backButtonText: {
     color: 'white',
     fontWeight: '500',
   },
   username: {
-    fontSize: 16,
-    color: '#4ade80',
+    fontSize: 20,
+    color: '#52050A',
     textAlign: 'center',
     marginBottom: 15,
+    backgroundColor: '#bcd2ee',
+    padding: 15,
+    borderRadius: 24,
   },
   prompt: {
     fontSize: 16,
-    color: '#ffd33d',
+    color: '#52050A',
     textAlign: 'center',
     marginVertical: 10,
     padding: 10,
-    backgroundColor: 'rgba(255, 211, 61, 0.1)',
+    backgroundColor: 'rgba(188, 210, 238,0.7)',
     borderRadius: 5,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(188, 210, 238,0.7)',
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
+    borderStyle: 'solid',
+    borderColor: '#52050A',
+    borderWidth: 2,
   },
   listHeader: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#52050A',
     marginTop: 20,
     marginBottom: 10,
+    padding: 14,
+    borderRadius: 5,
+    backgroundColor: 'rgba(188, 210, 238,0.7)',
   },
   listItem: {
     marginBottom: 10,
     padding: 10,
-    backgroundColor: '#333',
+    backgroundColor: 'rgba(188, 210, 238,0.7)',
     borderRadius: 5,
   },
   promptText: {
-    color: '#ffd33d',
+    color: '#52050A',
     fontSize: 14,
     marginBottom: 5,
   },
   responseText: {
-    color: '#fff',
+    color: '#52050A',
     fontSize: 16,
     marginBottom: 5,
   },
@@ -303,5 +346,26 @@ const styles = StyleSheet.create({
     color: '#aaa',
     textAlign: 'center',
     marginTop: 20,
-  }
+  },
+  saveButton: {
+    backgroundColor: 'rgba(188, 210, 238,0.7)', // Dark red background
+    paddingVertical: 12, // Vertical padding
+    paddingHorizontal: 20, // Horizontal padding
+    borderRadius: 8, // Rounded corners
+    alignItems: 'center', // Center the text
+    marginVertical: 10, // Add vertical spacing
+    borderStyle: 'solid',
+    borderColor: '#52050A',
+    borderWidth: 2,
+  },
+  
+  saveButtonText: {
+    color: '#52050A', // White text color
+    fontSize: 16, // Font size
+    fontWeight: 'bold', // Bold text
+  },
+  
+  disabledButton: {
+    backgroundColor: '#d3d3d3', // Gray background when disabled
+  },
 });
