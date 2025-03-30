@@ -11,9 +11,10 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
+    "fonts": {
+    "CrimsonPro-Regular": "./assets/fonts/CrimsonPro-VariableFont_wght.ttf"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.a6zhuang.neverfar",

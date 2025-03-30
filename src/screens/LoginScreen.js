@@ -114,11 +114,11 @@ export default function LoginScreen({ navigation }) {
                   {errors.password && touched.password && (<Text style={styles.errorText}>{errors.password}</Text>)}
                 </View>
 
-                <TouchableOpacity style={styles.button} onPress={handleSubmit}><Text style={styles.buttonText}>LOGIN</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={handleSubmit}><Text style={styles.buttonText}>Login</Text></TouchableOpacity>
 
                 <View style={styles.switchContainer}>
-                  <Text style={styles.switchText}>Don't have an account?</Text>
-                  <TouchableOpacity onPress={() => setIsRegistering(true)}><Text style={styles.switchLink}>Register</Text></TouchableOpacity>
+                  <Text style={styles.loginSwitchText}>Don't have an account?</Text>
+                  <TouchableOpacity onPress={() => setIsRegistering(true)}><Text style={styles.loginSwitchLink}>Register</Text></TouchableOpacity>
                 </View>
               </View>
             )}
@@ -144,11 +144,11 @@ export default function LoginScreen({ navigation }) {
                   </View>
                 ))}
 
-                <TouchableOpacity style={styles.registerButton} onPress={handleSubmit}><Text style={styles.buttonText}>Register</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.registerButton} onPress={handleSubmit}><Text style={styles.registerButtonText}>Register</Text></TouchableOpacity>
 
                 <View style={styles.switchContainer}>
                   <Text style={styles.switchText}>Already have an account?</Text>
-                  <TouchableOpacity onPress={() => setIsRegistering(false)}><Text style={styles.switchLink}>Login</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsRegistering(false)}><Text style={styles.registrationSwitchLink}>Login</Text></TouchableOpacity>
                 </View>
               </View>
             )}
@@ -226,7 +226,9 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#bcd2ed',
     paddingHorizontal: 15,
-    paddingVertical: 12
+    paddingVertical: 12,
+    borderBottomWidth: 2, // Add a bottom border
+    borderBottomColor: '#832161', // Set the color of the bottom border
   },
   errorText: {
     fontSize: 12,
@@ -238,7 +240,9 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
-    marginTop: 20
+    marginTop: 20,
+    borderBottomWidth: 2, // Add a bottom border
+    borderBottomColor: '#832161',
   },
   registerButton: {
     backgroundColor: 'white',
@@ -246,25 +250,55 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 20,
-    width: width * 0.8
+    width: width * 0.8,
   },
+
   buttonText: {
     color: '#832161',
     fontSize: 16,
-    fontWeight: '600'
+    fontWeight: '600',
+  },
+  registerButtonText: {
+    color: '#832161',
+    fontSize: 16,
+    fontWeight: '600',
+    borderBottomWidth: 2, // Add a bottom border
+    borderBottomColor: '#832161',
   },
   switchContainer: {
     alignItems: 'center',
-    marginTop: 20
+    marginTop: 20,
+    borderWidth: 2, // Add a bottom border
+    borderColor: '#832161',
+    borderRadius: 70,
   },
-  switchText: {
+  loginSwitchText: {
     color: '#52050A',
+    backgroundColor: '#bcd2ee',
     fontSize: 14
   },
   switchLink: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500'
+    color: '#832161',
+    backgroundColor: '#BCD2ee',
+    fontSize: 20,
+    fontWeight: '500',
+  },
+  loginSwitchLink: {
+    color: '#832161',
+    backgroundColor: '#BCD2ee',
+    fontSize: 20,
+    fontWeight: '500',
+  },
+  registrationSwitchText: {
+    color: '#52050A',
+    backgroundColor: 'white',
+    fontSize: 14
+  },
+  registrationSwitchLink: {
+    color: '#832161',
+    backgroundColor: 'white',
+    fontSize: 20,
+    fontWeight: '500',
   },
   loginHearts: {
     position: 'absolute',
