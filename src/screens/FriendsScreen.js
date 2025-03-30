@@ -21,6 +21,7 @@ import {
   getConsistentProfileImage,
   listAllUsers
 } from '../services/DatabaseService';
+import ProfileImage from '../components/ProfileImage';
 
 export default function FriendsScreen({ navigation }) {
   const [currentUser, setCurrentUser] = useState(null);
@@ -291,9 +292,10 @@ export default function FriendsScreen({ navigation }) {
             keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => (
               <View style={styles.friendItem}>
-                <Image
-                  source={typeof item.image === 'string' ? { uri: item.image } : item.image}
-                  style={styles.friendImage}
+                <ProfileImage 
+                  userId={item.id} 
+                  user={item} 
+                  style={styles.friendImage} 
                 />
                 <View style={styles.friendInfo}>
                   <Text style={styles.friendName}>
@@ -342,6 +344,7 @@ export default function FriendsScreen({ navigation }) {
             keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => (
               <View style={styles.userItem}>
+                <ProfileImage user={item} />
                 <View style={styles.userInfo}>
                   <Text style={styles.userName}>
                     {item.firstName || item.username}
@@ -523,5 +526,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 5,
+  },
+  defaultAvatarContainer: {
+    backgroundColor: '#BCD2EE', // Light blue background
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  defaultAvatarText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#832161', // Dark pink text
   }
 });

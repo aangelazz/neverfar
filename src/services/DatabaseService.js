@@ -48,15 +48,51 @@ class MemoryDatabase {
   
   ensureTestUser() {
     if (!this.users.some(u => u.username === 'test')) {
+      const testUserId = this.users.length > 0 ? Math.max(...this.users.map(u => u.id)) + 1 : 1;
       this.users.push({
-        id: this.users.length > 0 ? Math.max(...this.users.map(u => u.id)) + 1 : 1,
+        id: testUserId,
         username: 'test',
         password: 'password123',
-        firstName: 'Test', // Add firstName
-        lastName: 'User'   // Add lastName
+        firstName: 'Test',
+        lastName: 'User',
+        hasProfileImage: true,
+        // Remove this reference or define it properly:
+        // profileImage: defaultTestUserImage 
       });
+      
+      // Set up the default profile image for the test user
+      this.setupTestUserProfileImage(testUserId).then(() => {
+        console.log('Test user profile image set');
+      }).catch(err => {
+        console.error('Error setting test user profile image:', err);
+      });
+      
       this.saveData();
       console.log('Default test user added');
+    }
+  }
+
+  async setupTestUserProfileImage(testUserId) {
+    try {
+      // Use a relative path that React Native can resolve
+      const defaultTestUserImage = require('../../assets/images/vector-flat-illustration-grayscale-avatar-600nw-2264922221.webp');
+      
+      // For AsyncStorage, we need to store a reference or path
+      // Since we can't store the actual image object, we'll use a special identifier
+      const profileImagesJson = await AsyncStorage.getItem('profile_images');
+      const profileImages = profileImagesJson ? JSON.parse(profileImagesJson) : {};
+      
+      // Use a special marker to indicate this is the default test user image
+      profileImages[testUserId] = 'DEFAULT_TEST_USER_IMAGE';
+      
+      // Save the updated profile images
+      await AsyncStorage.setItem('profile_images', JSON.stringify(profileImages));
+      console.log(`Default profile image reference set for test user (ID: ${testUserId})`);
+      
+      return true;
+    } catch (error) {
+      console.error('Error setting up test user profile image:', error);
+      return false;
     }
   }
   
@@ -810,45 +846,38 @@ const PROFILE_IMAGES_KEY = 'profile_images_mapping';
 // Get or generate a consistent profile image for a user
 export const getConsistentProfileImage = async (userId) => {
   try {
-    // First check if the user has an actual profile image
+    // Special case for test user
+    const usersJson = await AsyncStorage.getItem('users');
+    const users = usersJson ? JSON.parse(usersJson) : [];
+    const testUser = users.find(u => u.username === 'test');
+    
+    if (testUser && testUser.id == userId) {
+      console.log('Getting default profile image for test user');
+      // For the test user, return the special marker
+      return 'DEFAULT_TEST_USER_IMAGE';
+    }
+    
+    // Rest of the function for other users...
     const profileImagesJson = await AsyncStorage.getItem('profile_images');
     const profileImages = profileImagesJson ? JSON.parse(profileImagesJson) : {};
     
-    // If user has a custom profile image, return it
-    if (profileImages[userId]) {
+    if (profileImages[userId] === 'DEFAULT_TEST_USER_IMAGE') {
+      return 'DEFAULT_TEST_USER_IMAGE';
+    } else if (profileImages[userId]) {
       console.log(`Found stored profile image for user ${userId}`);
       return profileImages[userId];
     }
     
-    // Check if we've already assigned a random image
-    const randomImagesJson = await AsyncStorage.getItem('random_profile_images');
-    const randomImages = randomImagesJson ? JSON.parse(randomImagesJson) : {};
-    
-    // If we've already assigned a random image, return it
-    if (randomImages[userId]) {
-      console.log(`Found random profile image for user ${userId}`);
-      return randomImages[userId];
-    }
-    
-    // Generate and store a random image for this user
-    console.log(`Generating new random profile image for user ${userId}`);
-    const gender = Math.random() > 0.5 ? 'men' : 'women';
-    const imageNumber = Math.floor(Math.random() * 100);
-    const randomImageUrl = `https://randomuser.me/api/portraits/${gender}/${imageNumber}.jpg`;
-    
-    // Store this assignment for future use
-    randomImages[userId] = randomImageUrl;
-    await AsyncStorage.setItem('random_profile_images', JSON.stringify(randomImages));
-    
-    return randomImageUrl;
+    // No profile image was uploaded
+    console.log(`No profile image found for user ${userId}`);
+    return null;
   } catch (error) {
-    console.error('Error getting consistent profile image:', error);
-    // Fallback to a default image
-    return `https://randomuser.me/api/portraits/lego/1.jpg`;
+    console.error('Error getting profile image:', error);
+    return null;
   }
 };
 
-// Add this function to save the image to the file system
+// Add this function to save the image to the file systemdd this function to save the image to the file system
 export const saveImageToFileSystem = async (imageUri, userId) => {
   try {
     // Only works on native platforms
@@ -866,7 +895,7 @@ export const saveImageToFileSystem = async (imageUri, userId) => {
     // Create directory if it doesn't exist
     const profileDirectory = `${FileSystem.documentDirectory}profiles/`;
     const dirInfo = await FileSystem.getInfoAsync(profileDirectory);
-    
+        
     if (!dirInfo.exists) {
       await FileSystem.makeDirectoryAsync(profileDirectory, { intermediates: true });
     }

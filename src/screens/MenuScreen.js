@@ -44,13 +44,13 @@ export default function HomePage({ navigation }) {
           
           // If the user has friends, process them - otherwise friendsWithImages will be empty array
           if (friends && friends.length > 0) {
-            // Fetch profile images for each friend
+            // Fetch profile images for each friend - WITHOUT random generation
             const friendsWithImages = await Promise.all(
               friends.map(async (friend) => {
                 const profileImage = await getUserProfileImage(friend.id);
                 return {
                   ...friend,
-                  image: profileImage || `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 100)}.jpg`
+                  image: profileImage // No fallback to random images
                 };
               })
             );
@@ -197,30 +197,21 @@ export default function HomePage({ navigation }) {
                   });
                 }}
               >
-                <Image
-                  source={typeof friend.image === 'string' ? { uri: friend.image } : friend.image}
-                  style={styles.friendAvatar}
-                />
+                {friend.image ? (
+                  <Image
+                    source={{ uri: friend.image }}
+                    style={styles.friendAvatar}
+                  />
+                ) : (
+                  <View style={[styles.friendAvatar, styles.defaultAvatarContainer]}>
+                    <Text style={styles.defaultAvatarText}>
+                      {friend.firstName ? friend.firstName[0].toUpperCase() : friend.username[0].toUpperCase()}
+                    </Text>
+                  </View>
+                )}
               </TouchableOpacity>
             );
           })}
-        </View>
-
-        {/* Profile picture display */}
-        <View style={styles.profileImageContainer}>
-          {currentUser && currentUser.profileImage ? (
-            <Image 
-              source={{ uri: currentUser.profileImage }} 
-              style={styles.profileImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.profileImagePlaceholder}>
-              <Text style={styles.profileImagePlaceholderText}>
-                {currentUser && currentUser.firstName ? currentUser.firstName[0] + (currentUser.lastName ? currentUser.lastName[0] : '') : '?'}
-              </Text>
-            </View>
-          )}
         </View>
 
         {/* Logout button */}
@@ -319,32 +310,15 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  profileImageContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#bcd2ed',
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#832161'
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  profileImagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#bcd2ed',
+  defaultAvatarContainer: {
+    backgroundColor: '#BCD2EE', // Light blue background
     justifyContent: 'center',
     alignItems: 'center',
   },
-  profileImagePlaceholderText: {
-    fontSize: 24,
+  defaultAvatarText: {
+    fontSize: width * 0.1,
     fontWeight: 'bold',
-    color: '#832161',
+    color: '#832161', // Dark pink text
   },
   logoutImageWrapper: {
     position: 'absolute',
