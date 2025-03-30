@@ -9,6 +9,9 @@ NeverFar is a React Native mobile application built with Expo that helps you sta
 - Interactive Home Screen: Navigate through a visually appealing heart-centered interface
 - Profile Images: Set your profile image during account creation
 
+## Demo
+https://www.youtube.com/watch?v=yG-ToJk4cX4&ab_channel=AngelaZhuang
+
 ## Get started
 
 Prerequisites
