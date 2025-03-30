@@ -9,11 +9,13 @@ import {
   Alert,
   ActivityIndicator,
   SafeAreaView,
-  Dimensions
+  Dimensions,
+  Modal
 } from 'react-native';
 import { getUserSession, getUserPhotos, deleteUserPhoto } from '../services/DatabaseService';
 
 const { width } = Dimensions.get('window');
+
 const photoSize = width / 2 - 15; // 2 columns with some margin
 
 export default function PhotoGalleryScreen({ navigation, route }) {
@@ -21,47 +23,55 @@ export default function PhotoGalleryScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
   
   // Load user session and photos
   useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const session = await getUserSession();
-        if (session && session.isLoggedIn) {
-          const user = {
-            userId: session.userId,
-            username: session.username,
-            firstName: session.firstName
-          };
-          setCurrentUser(user);
-          
-          // Load user photos
-          const userPhotos = await getUserPhotos(user.userId);
-          setPhotos(userPhotos);
-        } else {
-          // Handle case where user is not logged in
-          Alert.alert('Authentication Required', 'Please log in to view your photos');
-          navigation.navigate('Login');
-        }
-      } catch (error) {
-        console.error('Failed to load user data:', error);
-        setError('Failed to load your photos. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     loadUserData();
     
     // Refresh photos when returning to this screen
     const unsubscribe = navigation.addListener('focus', () => {
-      if (currentUser) {
-        loadUserPhotos(currentUser.userId);
-      }
+      console.log("PhotoGallery: Screen focused, reloading data");
+      loadUserData();
     });
     
     return unsubscribe;
   }, [navigation]);
+
+  // Load user session and photos
+  const loadUserData = async () => {
+    try {
+      console.log("PhotoGallery: Loading user data...");
+      const session = await getUserSession();
+      console.log("PhotoGallery: Session loaded:", session);
+      
+      if (session && session.isLoggedIn) {
+        const user = {
+          userId: session.userId,
+          username: session.username,
+          firstName: session.firstName
+        };
+        console.log("PhotoGallery: User set:", user);
+        setCurrentUser(user);
+        
+        // Load user photos with debugging
+        console.log(`PhotoGallery: Loading photos for user ${user.userId}`);
+        const userPhotos = await getUserPhotos(user.userId);
+        console.log(`PhotoGallery: Loaded ${userPhotos.length} photos:`, userPhotos);
+        setPhotos(userPhotos);
+      } else {
+        console.log("PhotoGallery: No active user session");
+        Alert.alert('Authentication Required', 'Please log in to view your photos');
+        navigation.navigate('Login');
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+      setError('Failed to load your photos. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Separate function to load photos (for refreshing)
   const loadUserPhotos = async (userId) => {
@@ -78,37 +88,46 @@ export default function PhotoGalleryScreen({ navigation, route }) {
   };
   
   // Handle photo deletion
-  const handleDeletePhoto = async (photoId) => {
-    try {
-      Alert.alert(
-        'Delete Photo',
-        'Are you sure you want to delete this photo? This cannot be undone.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Delete', 
-            style: 'destructive',
-            onPress: async () => {
+  const handleDeletePhoto = (photo) => {
+    Alert.alert(
+      'Delete Photo',
+      'Are you sure you want to delete this photo? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
               setLoading(true);
-              await deleteUserPhoto(photoId);
+              await deleteUserPhoto(photo.id);
+              
+              // Close modal if the deleted photo is currently selected
+              if (selectedPhoto && selectedPhoto.id === photo.id) {
+                setModalVisible(false);
+                setSelectedPhoto(null);
+              }
+              
               // Reload photos after deletion
               if (currentUser) {
                 await loadUserPhotos(currentUser.userId);
               }
+            } catch (error) {
+              console.error('Failed to delete photo:', error);
+              Alert.alert('Error', 'Failed to delete photo');
+            } finally {
               setLoading(false);
             }
           }
-        ]
-      );
-    } catch (error) {
-      console.error('Failed to delete photo:', error);
-      Alert.alert('Error', 'Failed to delete photo');
-    }
+        }
+      ]
+    );
   };
   
-  // View a single photo fullscreen
+  // Show photo in modal
   const viewPhoto = (photo) => {
-    navigation.navigate('PhotoDetail', { photo });
+    setSelectedPhoto(photo);
+    setModalVisible(true);
   };
   
   if (loading) {
@@ -142,7 +161,7 @@ export default function PhotoGalleryScreen({ navigation, route }) {
         </Text>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate('Nav')} // Navigate directly to Nav instead of goBack()
         >
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -167,7 +186,7 @@ export default function PhotoGalleryScreen({ navigation, route }) {
             <TouchableOpacity
               style={styles.photoContainer}
               onPress={() => viewPhoto(item)}
-              onLongPress={() => handleDeletePhoto(item.id)}
+              onLongPress={() => handleDeletePhoto(item)}
             >
               <Image source={{ uri: item.photoUri }} style={styles.thumbnail} />
               {item.caption ? (
@@ -183,6 +202,50 @@ export default function PhotoGalleryScreen({ navigation, route }) {
           contentContainerStyle={styles.photoList}
         />
       )}
+      
+      {/* Photo Modal */}
+      <Modal
+        animationType="fade"
+        transparent={false}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          {selectedPhoto && (
+            <>
+              <Image 
+                source={{ uri: selectedPhoto.photoUri }} 
+                style={styles.fullImage} 
+              />
+              
+              <View style={styles.modalInfo}>
+                {selectedPhoto.caption ? (
+                  <Text style={styles.modalCaption}>{selectedPhoto.caption}</Text>
+                ) : null}
+                <Text style={styles.modalTimestamp}>
+                  {new Date(selectedPhoto.timestamp).toLocaleString()}
+                </Text>
+              </View>
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.button, styles.modalButton]}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text style={styles.buttonText}>Close</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.button, styles.dangerButton, styles.modalButton]}
+                  onPress={() => handleDeletePhoto(selectedPhoto)}
+                >
+                  <Text style={styles.buttonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </SafeAreaView>
+      </Modal>
       
       <TouchableOpacity
         style={styles.fab}
@@ -276,10 +339,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 10,
-    width: '50%',
+    width: '45%',
   },
   primaryButton: {
     backgroundColor: '#6366f1',
+  },
+  dangerButton: {
+    backgroundColor: '#e53935',
   },
   buttonText: {
     color: 'white',
@@ -305,4 +371,36 @@ const styles = StyleSheet.create({
     fontSize: 30,
     color: 'white',
   },
+  
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'space-between',
+  },
+  fullImage: {
+    flex: 1,
+    width: '100%',
+    resizeMode: 'contain',
+  },
+  modalInfo: {
+    padding: 15,
+  },
+  modalCaption: {
+    color: '#fff',
+    fontSize: 18,
+    marginBottom: 5,
+  },
+  modalTimestamp: {
+    color: '#999',
+    fontSize: 14,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    padding: 20,
+  },
+  modalButton: {
+    marginTop: 0,
+  }
 });

@@ -25,19 +25,21 @@ export default function CameraScreen({ navigation }) {
     const loadUserSession = async () => {
       try {
         const session = await getUserSession();
+        console.log("Camera: User session loaded:", session);
         if (session && session.isLoggedIn) {
           setCurrentUser({
             userId: session.userId,
             username: session.username,
             firstName: session.firstName
           });
+          console.log("Camera: Current user set:", session.userId);
         } else {
-          // Handle case where user is not logged in
-          Alert.alert('Authentication Required', 'Please log in to use the Camera feature');
+          console.log("Camera: No active user session");
+          Alert.alert('Login Required', 'Please login to use the camera');
           navigation.navigate('Login');
         }
       } catch (error) {
-        console.error('Failed to get user session:', error);
+        console.error('Failed to load user session:', error);
       }
     };
     
@@ -118,32 +120,41 @@ export default function CameraScreen({ navigation }) {
 
   // Save image and navigate back
   const saveAndGoBack = async () => {
-    if (capturedImage && currentUser) {
-      setLoading(true);
-      try {
-        // Save the photo to the database
-        const photoId = await saveUserPhoto(
-          currentUser.userId, 
-          capturedImage,
-          caption // Optional caption
-        );
-        
-        // Navigate back with success message
-        navigation.navigate('Menu', { 
-          photoSaved: true,
-          photoId: photoId,
-          message: 'Photo saved to your collection!' 
-        });
-      } catch (err) {
-        console.error('Error saving photo:', err);
-        Alert.alert('Error', 'Failed to save your photo. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    } else if (!currentUser) {
-      Alert.alert('Error', 'You need to be logged in to save photos');
-    } else {
+    if (!capturedImage) {
       Alert.alert('Error', 'No image captured');
+      return;
+    }
+    
+    if (!currentUser || !currentUser.userId) {
+      console.error("No current user or userId");
+      Alert.alert('Error', 'You need to be logged in to save photos');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      console.log(`Saving photo for user ${currentUser.userId}`);
+      
+      // Save to database with debugging
+      const photoId = await saveUserPhoto(
+        currentUser.userId, 
+        capturedImage,
+        caption || '' // Use caption if it exists
+      );
+      
+      console.log(`Photo saved with ID: ${photoId}`);
+      
+      // Add a success alert to confirm the save happened
+      Alert.alert(
+        'Photo Saved!', 
+        'Your photo has been saved to your gallery',
+        [{ text: 'OK', onPress: () => navigation.navigate('Menu') }]
+      );
+    } catch (err) {
+      console.error('Error saving photo:', err);
+      Alert.alert('Error', 'Failed to save your photo: ' + err.message);
+    } finally {
+      setLoading(false);
     }
   };
   

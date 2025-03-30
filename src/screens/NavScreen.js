@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, Image } from 'react-native';
 
 const NavScreen = ({ navigation }) => {
   return (
@@ -21,6 +21,10 @@ const NavScreen = ({ navigation }) => {
 
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Calendar')}>
         <Text style={styles.buttonText}>together time!</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('PhotoGallery')}>
+        <Text style={styles.buttonText}>photo gallery</Text>
       </TouchableOpacity>
     </ImageBackground>
   );
@@ -45,7 +49,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: 'ChalkboardSE-Bold', // Or similar if using a custom font
     textAlign: 'center',
-  },
+  }
 });
 
 export default NavScreen;

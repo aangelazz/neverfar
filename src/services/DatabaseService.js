@@ -172,48 +172,25 @@ class MemoryDatabase {
 
 // Create database instance
 const memoryDb = new MemoryDatabase();
-const db = memoryDb;
+const dbMemory = memoryDb;
 
-// Rest of your code stays mostly the same, but we'll update a few functions
+// Initialize database with error handling - using AsyncStorage now
 export const initDatabase = async () => {
-  console.log('Initializing database...');
-  
-  // Ensure test user exists
-  memoryDb.ensureTestUser();
-  
+  console.log("Initializing AsyncStorage database...");
   try {
-    await new Promise((resolve, reject) => {
-      db.transaction(tx => {
-        // Keep your existing tables
-        
-        // Add the photos table
-        tx.executeSql(
-          `CREATE TABLE IF NOT EXISTS photos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            userId INTEGER,
-            photoUri TEXT,
-            caption TEXT,
-            timestamp TEXT,
-            latitude REAL,
-            longitude REAL,
-            FOREIGN KEY (userId) REFERENCES users (id)
-          );`,
-          [],
-          () => {
-            console.log('Photos table created or already exists');
-            resolve();
-          },
-          (_, error) => {
-            console.error('Error creating photos table:', error);
-            reject(error);
-          }
-        );
-      });
-    });
-    console.log('Database initialized successfully');
+    // Check if photos have been initialized before
+    const photosJson = await AsyncStorage.getItem('photos');
+    if (photosJson === null) {
+      // Initialize empty photos array
+      await AsyncStorage.setItem('photos', JSON.stringify([]));
+      console.log("Photos storage initialized");
+    } else {
+      const photos = JSON.parse(photosJson);
+      console.log(`Found ${photos.length} existing photos in storage`);
+    }
     return true;
   } catch (error) {
-    console.error('Database initialization failed:', error);
+    console.error("AsyncStorage initialization failed:", error);
     return false;
   }
 };
@@ -268,7 +245,7 @@ export const authenticateUser = async (username, password) => {
     
     // Check if test user exists in database
     return new Promise((resolve, reject) => {
-      db.transaction(tx => {
+      dbMemory.transaction(tx => {
         tx.executeSql(
           'SELECT * FROM users WHERE username = ?',
           ['test'],
@@ -310,7 +287,7 @@ export const authenticateUser = async (username, password) => {
   
   // Standard authentication logic for non-test users
   return new Promise((resolve, reject) => {
-    db.transaction(tx => {
+    dbMemory.transaction(tx => {
       tx.executeSql(
         'SELECT * FROM users WHERE username = ? AND password = ?',
         [username, password],
@@ -425,7 +402,7 @@ export const logoutUser = async () => {
 // List all users
 export const listAllUsers = async () => {
   return new Promise((resolve, reject) => {
-    db.transaction(tx => {
+    dbMemory.transaction(tx => {
       tx.executeSql(
         'SELECT * FROM users',
         [],
@@ -447,7 +424,7 @@ export const registerUser = async (username, password, firstName = '', lastName 
   console.log(`Registering user with firstName: ${firstName}`);
   
   return new Promise((resolve, reject) => {
-    db.transaction(tx => {
+    dbMemory.transaction(tx => {
       // Check if username exists
       tx.executeSql(
         'SELECT * FROM users WHERE username = ?',
@@ -478,79 +455,116 @@ export const registerUser = async (username, password, firstName = '', lastName 
   });
 };
 
-// Add these functions to store and retrieve photos
+// UPDATED PHOTO FUNCTIONS USING ASYNCSTORAGE
 
-// Function to save a photo to the database
+// Save a photo
 export const saveUserPhoto = async (userId, photoUri, caption = '') => {
-  return new Promise((resolve, reject) => {
+  console.log(`Saving photo for user ${userId} with caption: ${caption}`);
+  
+  try {
+    // Check inputs
     if (!userId || !photoUri) {
-      reject(new Error('User ID and photo URI are required'));
-      return;
+      throw new Error('User ID and photo URI are required');
     }
-
-    const timestamp = new Date().toISOString();
     
-    db.transaction(tx => {
-      tx.executeSql(
-        'INSERT INTO photos (userId, photoUri, caption, timestamp) VALUES (?, ?, ?, ?)',
-        [userId, photoUri, caption, timestamp],
-        (_, { insertId }) => {
-          console.log(`Photo saved with ID: ${insertId}`);
-          resolve(insertId);
-        },
-        (_, error) => {
-          console.error('Error saving photo:', error);
-          reject(error);
-        }
-      );
-    });
-  });
+    // Get existing photos
+    const photosJson = await AsyncStorage.getItem('photos');
+    const photos = photosJson ? JSON.parse(photosJson) : [];
+    
+    // Create a new photo object with a unique ID
+    const newPhoto = {
+      id: Date.now().toString(), // Simple unique ID
+      userId: userId,
+      photoUri: photoUri,
+      caption: caption || '',
+      timestamp: new Date().toISOString()
+    };
+    
+    // Add to photos array
+    photos.push(newPhoto);
+    
+    // Save back to AsyncStorage
+    await AsyncStorage.setItem('photos', JSON.stringify(photos));
+    console.log(`Photo saved successfully with ID: ${newPhoto.id}`);
+    
+    return newPhoto.id;
+  } catch (error) {
+    console.error("Error saving photo:", error);
+    throw error;
+  }
 };
 
-// Function to get all photos for a user
+// Get photos for a user
 export const getUserPhotos = async (userId) => {
-  return new Promise((resolve, reject) => {
-    db.transaction(tx => {
-      tx.executeSql(
-        'SELECT * FROM photos WHERE userId = ? ORDER BY timestamp DESC',
-        [userId],
-        (_, { rows }) => {
-          console.log(`Found ${rows.length} photos for user ${userId}`);
-          resolve(rows._array);
-        },
-        (_, error) => {
-          console.error('Error fetching user photos:', error);
-          reject(error);
-        }
-      );
-    });
-  });
+  console.log(`Getting photos for user ${userId}`);
+  
+  try {
+    // Get all photos
+    const photosJson = await AsyncStorage.getItem('photos');
+    
+    if (!photosJson) {
+      console.log('No photos found in storage');
+      return [];
+    }
+    
+    const photos = JSON.parse(photosJson);
+    
+    // Filter by user ID and sort by timestamp (newest first)
+    const userPhotos = photos
+      .filter(photo => photo.userId == userId)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    console.log(`Found ${userPhotos.length} photos for user ${userId}`);
+    if (userPhotos.length > 0) {
+      console.log("First photo sample:", JSON.stringify(userPhotos[0]));
+    }
+    
+    return userPhotos;
+  } catch (error) {
+    console.error("Error getting user photos:", error);
+    throw error;
+  }
 };
 
-// Function to delete a photo
+// Delete a photo
 export const deleteUserPhoto = async (photoId) => {
-  return new Promise((resolve, reject) => {
-    db.transaction(tx => {
-      tx.executeSql(
-        'DELETE FROM photos WHERE id = ?',
-        [photoId],
-        (_, { rowsAffected }) => {
-          console.log(`Deleted photo (${photoId}): ${rowsAffected} row(s) affected`);
-          resolve(rowsAffected > 0);
-        },
-        (_, error) => {
-          console.error(`Error deleting photo ${photoId}:`, error);
-          reject(error);
-        }
-      );
-    });
-  });
+  console.log(`Deleting photo ${photoId}`);
+  
+  try {
+    // Get all photos
+    const photosJson = await AsyncStorage.getItem('photos');
+    
+    if (!photosJson) {
+      console.log('No photos found in storage');
+      return false;
+    }
+    
+    const photos = JSON.parse(photosJson);
+    
+    // Filter out the photo to delete
+    const updatedPhotos = photos.filter(photo => photo.id !== photoId);
+    
+    // Check if any photo was removed
+    if (photos.length === updatedPhotos.length) {
+      console.log(`No photo found with ID: ${photoId}`);
+      return false;
+    }
+    
+    // Save the updated array
+    await AsyncStorage.setItem('photos', JSON.stringify(updatedPhotos));
+    console.log(`Photo ${photoId} deleted successfully`);
+    
+    return true;
+  } catch (error) {
+    console.error("Error deleting photo:", error);
+    throw error;
+  }
 };
 
 export default {
   initDatabase,
   authenticateUser,
-  registerUser,  // <-- Add this line
+  registerUser,
   verifyCredentials,
   saveUserSession,
   getUserSession,
