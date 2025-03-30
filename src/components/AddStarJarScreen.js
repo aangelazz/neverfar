@@ -1,5 +1,6 @@
 import React, { useState, useLayoutEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AddStarJarScreen({ navigation, route }) {
   const [note, setNote] = useState('');
@@ -22,9 +23,9 @@ export default function AddStarJarScreen({ navigation, route }) {
     });
   }, [navigation]);
 
-  const saveNote = () => {
+  const saveNote = async () => {
     if (!note || !friend) {
-      alert('Please fill out all fields.');
+      Alert.alert('Error', 'Please fill out all fields.');
       return;
     }
 
@@ -36,11 +37,26 @@ export default function AddStarJarScreen({ navigation, route }) {
       date,
     };
 
-    // Pass the new note back to the previous screen
-    route.params?.addNote(newNote);
+    try {
+      // Retrieve existing notes from AsyncStorage
+      const storedNotes = await AsyncStorage.getItem('starJarNotes');
+      const notes = storedNotes ? JSON.parse(storedNotes) : [];
 
-    // Navigate back to the previous screen
-    navigation.goBack();
+      // Add the new note to the list
+      const updatedNotes = [...notes, newNote];
+
+      // Save the updated notes back to AsyncStorage
+      await AsyncStorage.setItem('starJarNotes', JSON.stringify(updatedNotes));
+
+      // Pass the new note back to the previous screen
+      route.params?.addNote(newNote);
+
+      // Navigate back to the previous screen
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save the note. Please try again.');
+      console.error(error);
+    }
   };
 
   return (
