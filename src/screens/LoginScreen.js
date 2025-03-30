@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import * as ImagePicker from 'expo-image-picker';  // Make sure to install this
+import * as ImagePicker from 'expo-image-picker';
 import {
   initDatabase,
   authenticateUser,
@@ -172,14 +172,17 @@ export default function LoginScreen({ navigation }) {
                   {errors.password && touched.password && (<Text style={styles.errorText}>{errors.password}</Text>)}
                 </View>
 
-                <TouchableOpacity style={styles.button} onPress={handleSubmit}><Text style={styles.buttonText}>Login</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={handleSubmit}><Text style={styles.buttonText}>Login</Text></TouchableOpacity>
+                {/* Removed duplicate login button */}
+                <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                  <Text style={styles.buttonText}>Login</Text>
+                </TouchableOpacity>
 
                 <View style={styles.switchContainer}>
+                  {/* Removed duplicate "Don't have an account?" text and button */}
                   <Text style={styles.loginSwitchText}>Don't have an account?</Text>
-                  <TouchableOpacity onPress={() => setIsRegistering(true)}><Text style={styles.loginSwitchLink}>Register</Text></TouchableOpacity>
-                  <Text style={styles.loginSwitchText}>Don't have an account?</Text>
-                  <TouchableOpacity onPress={() => setIsRegistering(true)}><Text style={styles.loginSwitchLink}>Register</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsRegistering(true)}>
+                    <Text style={styles.loginSwitchLink}>Register</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -262,7 +265,7 @@ export default function LoginScreen({ navigation }) {
                   <Text style={styles.label}>Profile Picture</Text>
                   <TouchableOpacity 
                     onPress={pickImage} 
-                    style={[styles.input, styles.imagePickerBox]} // This combines both styles
+                    style={[styles.input, styles.imagePickerBox]}
                   >
                     {profileImage ? (
                       <Image source={{ uri: profileImage }} style={styles.profilePreview} />
@@ -275,7 +278,7 @@ export default function LoginScreen({ navigation }) {
                 </View>
 
                 <TouchableOpacity
-                  style={[styles.button, { width: width * 0.5 }]} // Reduced width from 0.8 to 0.5
+                  style={[styles.button, { width: width * 0.5 }]}
                   onPress={() => {
                     setFormSubmitted(true);
                     if (!profileImage) {
@@ -293,7 +296,9 @@ export default function LoginScreen({ navigation }) {
 
                 <View style={styles.switchContainer}>
                   <Text style={styles.switchText}>Already have an account?</Text>
-                  <TouchableOpacity onPress={() => setIsRegistering(false)}><Text style={styles.registrationSwitchLink}>Login</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsRegistering(false)}>
+                    <Text style={styles.registrationSwitchLink}>Login</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -352,7 +357,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 16,
-    width: width * 0.8, // Make all inputs the same width
+    width: width * 0.8,
   },
   registerInputGroup: {
     marginBottom: 16,
@@ -373,8 +378,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#bcd2ed',
     paddingHorizontal: 15,
     paddingVertical: 12,
-    borderRadius: 8, // Optional: add rounded corners
-    width: '100%', // Use full width of parent
+    borderRadius: 8,
+    width: '100%',
   },
   errorText: {
     fontSize: 12,
@@ -387,10 +392,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 20,
-    borderBottomWidth: 2, // Add a bottom border
-    borderBottomColor: '#832161',
-    marginTop: 20,
-    borderBottomWidth: 2, // Add a bottom border
+    borderBottomWidth: 2,
     borderBottomColor: '#832161',
   },
   registerButton: {
@@ -400,10 +402,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
     width: width * 0.8,
-    width: width * 0.8,
   },
-
-
   buttonText: {
     color: '#832161',
     fontSize: 16,
@@ -413,33 +412,24 @@ const styles = StyleSheet.create({
     color: '#832161',
     fontSize: 16,
     fontWeight: '600',
-    borderBottomWidth: 2, // Add a bottom border
-    borderBottomColor: '#832161',
-    fontWeight: '600',
-  },
-  registerButtonText: {
-    color: '#832161',
-    fontSize: 16,
-    fontWeight: '600',
-    borderBottomWidth: 2, // Add a bottom border
+    borderBottomWidth: 2,
     borderBottomColor: '#832161',
   },
   switchContainer: {
     alignItems: 'center',
     marginTop: 20,
-    borderWidth: 2, // Add a bottom border
-    borderColor: '#832161',
-    borderRadius: 70,
-    marginTop: 20,
-    borderWidth: 2, // Add a bottom border
+    borderWidth: 2,
     borderColor: '#832161',
     borderRadius: 70,
   },
   loginSwitchText: {
-  loginSwitchText: {
     color: '#52050A',
     backgroundColor: '#bcd2ee',
-    backgroundColor: '#bcd2ee',
+    fontSize: 14
+  },
+  switchText: {
+    color: '#52050A',
+    backgroundColor: 'white',
     fontSize: 14
   },
   switchLink: {
@@ -461,28 +451,7 @@ const styles = StyleSheet.create({
   },
   registrationSwitchLink: {
     color: '#832161',
-    backgroundColor: 'white',
-    fontSize: 20,
-    fontWeight: '500',
-    color: '#832161',
     backgroundColor: '#BCD2ee',
-    fontSize: 20,
-    fontWeight: '500',
-  },
-  loginSwitchLink: {
-    color: '#832161',
-    backgroundColor: '#BCD2ee',
-    fontSize: 20,
-    fontWeight: '500',
-  },
-  registrationSwitchText: {
-    color: '#52050A',
-    backgroundColor: 'white',
-    fontSize: 14
-  },
-  registrationSwitchLink: {
-    color: '#832161',
-    backgroundColor: 'white',
     fontSize: 20,
     fontWeight: '500',
   },
@@ -510,42 +479,42 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#bcd2ed', // Changed from #e1e1e1 to match text box color
+    backgroundColor: '#bcd2ed',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#bcd2ed', // Changed from #6366f1 to match background
+    borderColor: '#bcd2ed',
   },
   profilePreview: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover', // This will ensure the image covers the area
+    resizeMode: 'cover',
   },
   imagePickerText: {
     color: '#832161',
-    textAlign: 'left',        // Change from center to left to match other inputs
-    fontSize: 14,             // Match size to placeholder text in other fields
-    paddingHorizontal: 0,     // Remove padding to align properly
-    width: '100%',            // Take full width to align text properly
+    textAlign: 'left',
+    fontSize: 14,
+    paddingHorizontal: 0,
+    width: '100%',
   },
   imagePickerRequired: {
-    borderColor: '#ef4444', // Red border color
+    borderColor: '#ef4444',
   },
   imagePickerPlaceholder: {
-    justifyContent: 'center', // This centers content vertically
-    alignItems: 'center',     // This centers content horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
     height: '100%',
     width: '100%',
-    padding: 0,               // Remove any padding that could affect centering
+    padding: 0,
   },
   requiredLabel: {
     color: '#ef4444',
     fontWeight: 'bold',
   },
   imagePickerBox: {
-    height: 48, // Match standard input height
-    minHeight: 48, // Ensure minimum height
+    height: 48,
+    minHeight: 48,
     justifyContent: 'center',
     alignItems: 'center',
   },
