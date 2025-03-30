@@ -14,6 +14,8 @@ import CalendarScreen from './src/screens/CalendarScreen';
 import ViewCalendarScreen from './src/screens/ViewCalendarScreen';
 import PhotoGalleryScreen from './src/screens/PhotoGalleryScreen';
 import { initDatabase } from './src/services/DatabaseService';
+import StarJarScreen from './src/screens/StarJarScreen';
+import AllNotesScreen from './src/screens/AllNotesScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -114,6 +116,14 @@ export default function App() {
           name="PhotoGallery" 
           component={PhotoGalleryScreen} 
           options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="StarJar" 
+          component={StarJarScreen} 
+        />
+        <Stack.Screen 
+          name="AllNotes" 
+          component={AllNotesScreen} 
         />
       </Stack.Navigator>
     </NavigationContainer>

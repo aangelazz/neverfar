@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -19,6 +19,20 @@ export default function CameraScreen({ navigation }) {
   const [error, setError] = useState(null);
   const [caption, setCaption] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+  
+  // Move the useLayoutEffect inside the component
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity 
+          style={{ marginLeft: 15 }}
+          onPress={() => navigation.navigate('Nav')}
+        >
+          <Text style={{ color: '#fff', fontSize: 16 }}>Cancel</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
   
   // Load user session when component mounts
   useEffect(() => {
@@ -118,38 +132,37 @@ export default function CameraScreen({ navigation }) {
     useSystemCamera();
   };
 
-  // Save image and navigate back
+  // Update the saveAndGoBack function
+
   const saveAndGoBack = async () => {
     if (!capturedImage) {
       Alert.alert('Error', 'No image captured');
       return;
     }
     
-    if (!currentUser || !currentUser.userId) {
-      console.error("No current user or userId");
-      Alert.alert('Error', 'You need to be logged in to save photos');
-      return;
-    }
-    
     setLoading(true);
     try {
-      console.log(`Saving photo for user ${currentUser.userId}`);
+      // Get current user session
+      const session = await getUserSession();
+      if (!session || !session.isLoggedIn) {
+        Alert.alert('Error', 'You need to be logged in to save photos');
+        return;
+      }
       
-      // Save to database with debugging
+      console.log(`Saving photo for user ${session.userId}`);
+      
+      // Save to database
       const photoId = await saveUserPhoto(
-        currentUser.userId, 
+        session.userId, 
         capturedImage,
         caption || '' // Use caption if it exists
       );
       
       console.log(`Photo saved with ID: ${photoId}`);
       
-      // Add a success alert to confirm the save happened
-      Alert.alert(
-        'Photo Saved!', 
-        'Your photo has been saved to your gallery',
-        [{ text: 'OK', onPress: () => navigation.navigate('Menu') }]
-      );
+      // Navigate directly to PhotoGallery without showing an alert
+      navigation.navigate('PhotoGallery');
+      
     } catch (err) {
       console.error('Error saving photo:', err);
       Alert.alert('Error', 'Failed to save your photo: ' + err.message);
@@ -183,7 +196,7 @@ export default function CameraScreen({ navigation }) {
           
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('Nav')}
           >
             <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
@@ -246,11 +259,21 @@ export default function CameraScreen({ navigation }) {
         
         <TouchableOpacity
           style={[styles.button, styles.fullWidthButton, { marginTop: 15, backgroundColor: '#555' }]}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate('Nav')}
         >
           <Text style={styles.buttonText}>Go Back</Text>
         </TouchableOpacity>
       </View>
+      
+      {/* Add this gallery button */}
+      {!capturedImage && (
+        <TouchableOpacity
+          style={styles.galleryButton}
+          onPress={() => navigation.navigate('PhotoGallery')}
+        >
+          <Text style={styles.galleryButtonText}>View Gallery</Text>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -334,5 +357,20 @@ const styles = StyleSheet.create({
     padding: 15,
     color: 'white',
     fontSize: 16,
+  },
+  galleryButton: {
+    position: 'absolute',
+    bottom: 100, // Position above the camera controls
+    alignSelf: 'center', // Center horizontally
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    zIndex: 10,
+  },
+  galleryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
