@@ -18,6 +18,7 @@ export default function CalendarScreen({ navigation }) {
   // Configure the header
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerTitle: 'Together Time', // Change the header title to "Together Time"
       headerStyle: {
         backgroundColor: '#467498', // Set header background color
       },
@@ -96,6 +97,9 @@ export default function CalendarScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Heading */}
+      <Text style={styles.heading}>Find a time to catch up!</Text>
+
       {/* Upload Calendar Button */}
       <TouchableOpacity style={styles.button} onPress={pickFile}>
         <Text style={styles.buttonText}>Upload Calendar (.ics)</Text>
@@ -134,6 +138,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18, // Larger font size for button text
     fontWeight: 'bold', // Bold text
+  },
+  heading: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
 
