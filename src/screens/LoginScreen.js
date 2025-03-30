@@ -162,23 +162,30 @@ export default function LoginScreen({ navigation }) {
           <Formik initialValues={{ username: '', password: '' }} validationSchema={LoginSchema} onSubmit={handleLogin}>
             {({ handleChange, handleSubmit, values, errors, touched }) => (
               <View style={styles.loginContainer}>
-                <View style={styles.inputGroup}>
+                <View style={styles.loginInputGroup}>
                   <TextInput style={styles.input} placeholder="Enter your username" placeholderTextColor="#832161" value={values.username} onChangeText={handleChange('username')} autoCapitalize="none" />
                   {errors.username && touched.username && (<Text style={styles.errorText}>{errors.username}</Text>)}
                 </View>
 
-                <View style={styles.inputGroup}>
+                <View style={styles.loginInputGroup}>
                   <TextInput style={styles.input} placeholder="Enter your password" placeholderTextColor="#832161" value={values.password} onChangeText={handleChange('password')} secureTextEntry />
                   {errors.password && touched.password && (<Text style={styles.errorText}>{errors.password}</Text>)}
                 </View>
 
-                {/* Removed duplicate login button */}
-                <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                <TouchableOpacity 
+                  style={[
+                    styles.button, 
+                    { 
+                      width: '120%', // Match the width of the registration prompt container
+                      alignSelf: 'center' 
+                    }
+                  ]} 
+                  onPress={handleSubmit}
+                >
                   <Text style={styles.buttonText}>Login</Text>
                 </TouchableOpacity>
 
-                <View style={styles.switchContainer}>
-                  {/* Removed duplicate "Don't have an account?" text and button */}
+                <View style={styles.loginSwitchPromptContainer}>
                   <Text style={styles.loginSwitchText}>Don't have an account?</Text>
                   <TouchableOpacity onPress={() => setIsRegistering(true)}>
                     <Text style={styles.loginSwitchLink}>Register</Text>
@@ -198,6 +205,7 @@ export default function LoginScreen({ navigation }) {
                   <TextInput
                     style={styles.input}
                     placeholder="Enter your first name"
+                    placeholderTextColor="#832161"
                     value={values.firstName}
                     onChangeText={handleChange('firstName')}
                   />
@@ -211,6 +219,7 @@ export default function LoginScreen({ navigation }) {
                   <TextInput
                     style={styles.input}
                     placeholder="Enter your last name"
+                    placeholderTextColor="#832161"
                     value={values.lastName}
                     onChangeText={handleChange('lastName')}
                   />
@@ -224,6 +233,7 @@ export default function LoginScreen({ navigation }) {
                   <TextInput
                     style={styles.input}
                     placeholder="Choose a username"
+                    placeholderTextColor="#832161" // Match the color used in other fields
                     value={values.username}
                     onChangeText={handleChange('username')}
                     autoCapitalize="none"
@@ -238,6 +248,7 @@ export default function LoginScreen({ navigation }) {
                   <TextInput
                     style={styles.input}
                     placeholder="Choose a password"
+                    placeholderTextColor="#832161" // Match the color used in other fields
                     value={values.password}
                     onChangeText={handleChange('password')}
                     secureTextEntry
@@ -252,6 +263,7 @@ export default function LoginScreen({ navigation }) {
                   <TextInput
                     style={styles.input}
                     placeholder="Confirm your password"
+                    placeholderTextColor="#832161" // Match the color used in other fields
                     value={values.confirmPassword}
                     onChangeText={handleChange('confirmPassword')}
                     secureTextEntry
@@ -278,7 +290,14 @@ export default function LoginScreen({ navigation }) {
                 </View>
 
                 <TouchableOpacity
-                  style={[styles.button, { width: width * 0.5 }]}
+                  style={[
+                    styles.button, 
+                    { 
+                      width: width * 0.5,
+                      borderWidth: 3, // Increase to match the updated button style
+                      borderColor: '#832161',
+                    }
+                  ]}
                   onPress={() => {
                     setFormSubmitted(true);
                     if (!profileImage) {
@@ -336,16 +355,22 @@ const styles = StyleSheet.create({
     marginBottom: 30
   },
   loginContainer: {
+    width: '40%',
+    alignSelf: 'center',
     position: 'absolute',
-    right: 20,
-    top: '30%',
-    width: '50%',
-    alignSelf: 'flex-end',
-    paddingTop: 80
+    top: '50%', // Change from 40% to 50% to move everything down
+    transform: [{ translateY: -100 }],
+  },
+  loginInputGroup: {
+    marginBottom: 16,
+    marginTop: 10, // Add some top margin to the first input group
+    width: '200%', // Increase from 120% to 140% for even longer textboxes
+    alignSelf: 'center',
   },
   registerContainer: {
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingTop: 30, // Reduced from 60 to move the form up
+    paddingBottom: 60, // Keep the same bottom padding
     backgroundColor: 'white',
     height: height,
   },
@@ -357,11 +382,12 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 16,
-    width: width * 0.8,
+    width: width * 0.7, // Reduce from 0.8 to 0.7 (or your preferred width)
+    alignSelf: 'center', // This centers the input group if needed
   },
   registerInputGroup: {
     marginBottom: 16,
-    width: width * 0.9
+    width: width * 0.8, // Adjust if needed
   },
   registerInput: {
     backgroundColor: '#ffffff',
@@ -380,6 +406,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     width: '100%',
+    height: 48,
+    borderWidth: 2, // Increase from 1 to 2 for thicker border
+    borderColor: '#832161',
   },
   errorText: {
     fontSize: 12,
@@ -388,12 +417,16 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#bcd2ee',
-    padding: 15,
+    padding: 12,
     borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 20,
-    borderBottomWidth: 2,
-    borderBottomColor: '#832161',
+    borderWidth: 2,
+    borderColor: '#832161',
+    width: '110%', // Match width of textboxes
+    alignSelf: 'center',
+    height: 48,
   },
   registerButton: {
     backgroundColor: 'white',
@@ -412,25 +445,38 @@ const styles = StyleSheet.create({
     color: '#832161',
     fontSize: 16,
     fontWeight: '600',
-    borderBottomWidth: 2,
-    borderBottomColor: '#832161',
   },
   switchContainer: {
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 30, // Increase from 20 to 30 for more space
+    zIndex: 2,
+  },
+  loginSwitchPromptContainer: {
+    flexDirection: 'column', // Change from 'row' to 'column'
+    backgroundColor: '#BCD2EE',
     borderWidth: 2,
     borderColor: '#832161',
-    borderRadius: 70,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10, // Slightly increase vertical padding
+    alignItems: 'center', // Center items horizontally
+    justifyContent: 'center',
+    marginTop: 20,
+    width: '120%', // Increase from 100% to 120% to make it wider
+    alignSelf: 'center', // Ensure it's centered
   },
   loginSwitchText: {
-    color: '#52050A',
-    backgroundColor: '#bcd2ee',
-    fontSize: 14
+    color: '#832161',
+    backgroundColor: 'transparent',
+    fontSize: 14,
+    marginBottom: 6, // Add margin at the bottom instead of right
   },
   switchText: {
     color: '#52050A',
-    backgroundColor: 'white',
-    fontSize: 14
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Add slight opacity to make text stand out
+    fontSize: 14,
+    paddingHorizontal: 5, // Add some padding for better visibility
+    paddingVertical: 2,
   },
   switchLink: {
     color: '#832161',
@@ -440,7 +486,7 @@ const styles = StyleSheet.create({
   },
   loginSwitchLink: {
     color: '#832161',
-    backgroundColor: '#BCD2ee',
+    backgroundColor: 'transparent', // Change from '#BCD2ee' to 'transparent'
     fontSize: 20,
     fontWeight: '500',
   },
@@ -451,9 +497,11 @@ const styles = StyleSheet.create({
   },
   registrationSwitchLink: {
     color: '#832161',
-    backgroundColor: '#BCD2ee',
+    backgroundColor: 'transparent', // Change from blue to transparent
     fontSize: 20,
     fontWeight: '500',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
   },
   loginHearts: {
     position: 'absolute',
@@ -469,7 +517,8 @@ const styles = StyleSheet.create({
     right: width * 0.05,
     width: width * 0.33,
     height: undefined,
-    aspectRatio: 1
+    aspectRatio: 1,
+    zIndex: 1, // Lower zIndex means it will be behind elements with higher zIndex
   },
   imagePickerContainer: {
     alignItems: 'center',
