@@ -10,7 +10,7 @@ import {
 import { logoutUser } from '../services/DatabaseService';
 
 const friends = [
-  { id: 1, image: 'https://randomuser.me/api/portraits/women/65.jpg' },
+  { id: 1, image: require('../../assets/images/angela.png') },
   { id: 2, image: 'https://randomuser.me/api/portraits/men/32.jpg' },
   { id: 3, image: 'https://randomuser.me/api/portraits/women/44.jpg' },
   { id: 4, image: 'https://randomuser.me/api/portraits/men/73.jpg' },
@@ -124,23 +124,23 @@ export default function HomePage({ navigation }) {
           </TouchableOpacity>
 
           {friends.map((friend, index) => {
-            const angle = (2 * Math.PI / friends.length) * index;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
+  const angle = (2 * Math.PI / friends.length) * index;
+  const x = Math.cos(angle) * radius;
+  const y = Math.sin(angle) * radius;
 
-            return (
-              <Image
-                key={friend.id}
-                source={{ uri: friend.image }}
-                style={[
-                  styles.friendAvatar,
-                  {
-                    transform: [{ translateX: x }, { translateY: y }],
-                  },
-                ]}
-              />
-            );
-          })}
+  return (
+    <Image
+        key={friend.id}
+        source={typeof friend.image === 'string' ? { uri: friend.image } : friend.image}
+        style={[
+          styles.friendAvatar,
+          {
+            transform: [{ translateX: x }, { translateY: y }],
+          },
+        ]}
+      />
+    );
+  })}
         </View>
 
         {/* Logout image button in bottom left */}
