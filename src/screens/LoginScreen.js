@@ -10,7 +10,8 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Button
+  Button,
+  Image
 } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -154,7 +155,11 @@ export default function LoginScreen({ navigation }) {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>NeverFar</Text>
+        <Image
+          source={require('../../assets/images/welcomeBackTitle.png')} // Path to your image
+          style={styles.logoImage}
+          resizeMode="contain" // Ensures the image scales proportionally
+        />
         </View>
 
         {!isRegistering ? (
@@ -320,16 +325,27 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#832161',
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
   },
   logoContainer: {
-    alignItems: 'center',
-    marginBottom: 30,
+    position: 'absolute', // Allows absolute positioning
+    top: 40, // Distance from the top of the screen
+    left: -20, // Distance from the left of the screen
+    width: '120%', // Let the image size itself
+    height: 'auto', // Let the image size itself
+    alignItems: 'flex-start', // Aligns content to the start (left)
+    justifyContent: 'flex-start', // Ensures the container spans the full width
+  },
+  logoImage: {
+    width: '80%', // Adjust the width as needed
+    height: undefined, // Let the height adjust automatically to maintain aspect ratio
+    aspectRatio: 2, // Adjust this to match the aspect ratio of your image
+    marginBottom: 30, // Add spacing below the image
   },
   logoText: {
     fontSize: 32,
