@@ -187,22 +187,6 @@ export default function LoginScreen({ navigation }) {
               <View style={styles.registerContainer}>
                 <Image source={require('../../assets/images/registerTitle.png')} style={styles.registerTitleImage} resizeMode="contain" />
 
-                {[{ label: 'First Name', field: 'firstName' }, { label: 'Last Name', field: 'lastName' }, { label: 'Username', field: 'username' }, { label: 'Password', field: 'password', secure: true }, { label: 'Confirm Password', field: 'confirmPassword', secure: true }].map(({ label, field, secure }) => (
-                  <View key={field} style={styles.registerInputGroup}>
-                    <Text style={styles.label}>{label}</Text>
-                    <TextInput
-                      style={styles.registerInput}
-                      placeholder={`Enter your ${label.toLowerCase()}`}
-                      placeholderTextColor="#832161"
-                      value={values[field]}
-                      onChangeText={handleChange(field)}
-                      secureTextEntry={secure}
-                    />
-                    {errors[field] && touched[field] && (<Text style={styles.errorText}>{errors[field]}</Text>)}
-                  </View>
-                ))}
-
-                <TouchableOpacity style={styles.registerButton} onPress={handleSubmit}><Text style={styles.buttonText}>Register</Text></TouchableOpacity>
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>First Name</Text>
                   <TextInput
@@ -271,12 +255,12 @@ export default function LoginScreen({ navigation }) {
                   )}
                 </View>
 
-                <View style={styles.imagePickerContainer}>
-                  <Text style={styles.label}>Profile Picture <Text style={styles.requiredLabel}>(Required)</Text></Text>
-                  <TouchableOpacity onPress={pickImage} style={[
-                    styles.imagePicker,
-                    !profileImage && styles.imagePickerRequired // Add red border when no image is selected
-                  ]}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Profile Picture</Text>
+                  <TouchableOpacity 
+                    onPress={pickImage} 
+                    style={[styles.input, styles.imagePickerBox]} // This combines both styles
+                  >
                     {profileImage ? (
                       <Image source={{ uri: profileImage }} style={styles.profilePreview} />
                     ) : (
@@ -285,13 +269,10 @@ export default function LoginScreen({ navigation }) {
                       </View>
                     )}
                   </TouchableOpacity>
-                  {!profileImage && (
-                    <Text style={styles.errorText}>Profile picture is required</Text>
-                  )}
                 </View>
 
                 <TouchableOpacity
-                  style={styles.button}
+                  style={[styles.button, { width: width * 0.5 }]} // Reduced width from 0.8 to 0.5
                   onPress={() => {
                     setFormSubmitted(true);
                     if (!profileImage) {
@@ -367,7 +348,8 @@ const styles = StyleSheet.create({
     marginBottom: 20
   },
   inputGroup: {
-    marginBottom: 16
+    marginBottom: 16,
+    width: width * 0.8, // Make all inputs the same width
   },
   registerInputGroup: {
     marginBottom: 16,
@@ -387,7 +369,9 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#bcd2ed',
     paddingHorizontal: 15,
-    paddingVertical: 12
+    paddingVertical: 12,
+    borderRadius: 8, // Optional: add rounded corners
+    width: '100%', // Use full width of parent
   },
   errorText: {
     fontSize: 12,
@@ -423,7 +407,7 @@ const styles = StyleSheet.create({
     fontSize: 14
   },
   switchLink: {
-    color: '#fff',
+    color: '#832161', // Changed from '#fff' to match the color used in buttonText
     fontSize: 14,
     fontWeight: '500'
   },
@@ -451,33 +435,43 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#e1e1e1',
+    backgroundColor: '#bcd2ed', // Changed from #e1e1e1 to match text box color
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#6366f1',
+    borderColor: '#bcd2ed', // Changed from #6366f1 to match background
   },
   profilePreview: {
     width: '100%',
     height: '100%',
+    resizeMode: 'cover', // This will ensure the image covers the area
   },
   imagePickerText: {
-    color: '#666',
-    textAlign: 'center',
-    padding: 10,
+    color: '#832161',
+    textAlign: 'left',        // Change from center to left to match other inputs
+    fontSize: 14,             // Match size to placeholder text in other fields
+    paddingHorizontal: 0,     // Remove padding to align properly
+    width: '100%',            // Take full width to align text properly
   },
   imagePickerRequired: {
     borderColor: '#ef4444', // Red border color
   },
   imagePickerPlaceholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center', // This centers content vertically
+    alignItems: 'center',     // This centers content horizontally
     height: '100%',
     width: '100%',
+    padding: 0,               // Remove any padding that could affect centering
   },
   requiredLabel: {
     color: '#ef4444',
     fontWeight: 'bold',
+  },
+  imagePickerBox: {
+    height: 48, // Match standard input height
+    minHeight: 48, // Ensure minimum height
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
