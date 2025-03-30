@@ -401,14 +401,17 @@ const styles = StyleSheet.create({
     marginBottom: 8
   },
   input: {
-    backgroundColor: '#bcd2ed',
+    backgroundColor: '#d282a6', // Set the background color to #d282a6
     paddingHorizontal: 15,
     paddingVertical: 12,
     borderRadius: 8,
     width: '100%',
     height: 48,
-    borderWidth: 2, // Increase from 1 to 2 for thicker border
+    borderWidth: 2,
     borderColor: '#832161',
+    color: '#467498', // Set the text color to #467498 for user input
+    fontSize: 16, // Keep font size for readability
+    fontWeight: 'bold', // Keep text bold
   },
   errorText: {
     fontSize: 12,
