@@ -22,12 +22,12 @@ export default function HomePage({ navigation }) {
       Animated.sequence([
         Animated.timing(heartScale, {
           toValue: 1.1,
-          duration: 500,
+          duration: 800,
           useNativeDriver: true,
         }),
         Animated.timing(heartScale, {
           toValue: 1,
-          duration: 2000,
+          duration: 800,
           useNativeDriver: true,
         }),
       ])
@@ -41,7 +41,7 @@ export default function HomePage({ navigation }) {
 
         <View style={styles.circleContainer}>
           <Animated.View style={[styles.heartButton, { transform: [{ scale: heartScale }] }]}>
-          <Image source={require('../../assets/images/squareLogo2.png')} style={styles.heartButton} />
+          <Image source={require('../../assets/images/heart.png')} style={styles.heartButton} />
           </Animated.View>
 
           {friends.map((friend, index) => {

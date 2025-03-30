@@ -56,7 +56,7 @@ export default function HomeScreen({ navigation }) {
     contentContainerStyle={{ paddingBottom: 60 }}
     >
       <View style={styles.header}>
-      <TouchableOpacity style={styles.cameraButton} onPress={goToMenu}>
+      <TouchableOpacity style={styles.headerButton} onPress={goToMenu}>
           <Text style={styles.buttonText}>🧭 Go to Menu</Text>
       </TouchableOpacity>
         <Text style={styles.title}>Your Widget</Text>
@@ -135,6 +135,7 @@ const styles = StyleSheet.create({
   },
   headerButtons: {
     flexDirection: 'row',
+    justifyContent: 'flex-start',
   },
   headerButton: {
     color: '#52050a',
