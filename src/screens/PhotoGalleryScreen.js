@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     width: '45%',
   },
   primaryButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#467498', // Updated background color for "Take a Photo" button
   },
   dangerButton: {
     backgroundColor: '#e53935',

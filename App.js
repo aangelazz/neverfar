@@ -17,6 +17,7 @@ import { initDatabase } from './src/services/DatabaseService';
 import StarJarScreen from './src/screens/StarJarScreen';
 import AllNotesScreen from './src/screens/AllNotesScreen';
 import AddStarJarScreen from './src/components/AddStarJarScreen'; // Correct path to AddStarJarScreen
+import SettingsScreen from './src/screens/SettingsScreen'; // Adjust the path if necessary
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -131,6 +132,11 @@ export default function App() {
           name="AddStarJar" 
           component={AddStarJarScreen} 
           options={{ title: 'Add StarJar Note' }} 
+        />
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ title: 'Settings' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

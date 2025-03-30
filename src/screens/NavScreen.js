@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Make sure to import Ionicons
+import { Ionicons } from '@expo/vector-icons'; // Import Ionicons for the gear icon
 
 const NavScreen = ({ navigation }) => {
-  // Override the header back button behavior when component mounts
+  // Override the header back button and add a settings button
   React.useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
@@ -13,6 +13,14 @@ const NavScreen = ({ navigation }) => {
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
           <Text style={styles.headerButtonText}>Menu</Text>
+        </TouchableOpacity>
+      ),
+      headerRight: () => (
+        <TouchableOpacity 
+          style={styles.headerButton}
+          onPress={() => navigation.navigate('Settings')}
+        >
+          <Ionicons name="settings-outline" size={24} color="#fff" />
         </TouchableOpacity>
       ),
       headerStyle: {
@@ -101,7 +109,7 @@ const styles = StyleSheet.create({
   headerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 10,
+    marginHorizontal: 10,
     padding: 8,
   },
   headerButtonText: {
