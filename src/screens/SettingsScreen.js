@@ -105,14 +105,14 @@ export default function SettingsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
-      <TouchableOpacity style={styles.button} onPress={eraseAllData}>
-        <Text style={styles.buttonText}>Erase All Data</Text>
-      </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={resetBucketList}>
         <Text style={styles.buttonText}>Reset Bucket List</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={resetStarJar}>
         <Text style={styles.buttonText}>Reset Star Jar</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={eraseAllData}>
+        <Text style={styles.buttonText}>Erase All Data</Text>
       </TouchableOpacity>
     </View>
   );

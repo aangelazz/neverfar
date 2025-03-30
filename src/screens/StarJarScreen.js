@@ -5,6 +5,7 @@ import AddStarJarScreen from '../components/AddStarJarScreen';
 
 export default function StarJarScreen({ navigation }) {
   const [notes, setNotes] = useState([]);
+  const [filter, setFilter] = useState('all'); // State to manage the current filter
 
   // Load notes from AsyncStorage when the screen is loaded
   useEffect(() => {
@@ -34,6 +35,16 @@ export default function StarJarScreen({ navigation }) {
     }
   };
 
+  // Function to filter notes based on the selected filter
+  const getFilteredNotes = () => {
+    if (filter === 'fromYou') {
+      return notes.filter((note) => note.friend !== 'You'); // Notes sent to others
+    } else if (filter === 'toYou') {
+      return notes.filter((note) => note.friend === 'You'); // Notes received by you
+    }
+    return notes; // All notes
+  };
+
   // Configure the header
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -50,7 +61,29 @@ export default function StarJarScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Star Jar Notes</Text>
-      <Text style={styles.subtitle}>All Notes (Upcoming and My StarJar)</Text>
+      <Text style={styles.subtitle}>Filter and View Your Notes</Text>
+
+      {/* Filter Buttons */}
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={[styles.filterButton, filter === 'all' && styles.activeFilter]}
+          onPress={() => setFilter('all')}
+        >
+          <Text style={styles.filterButtonText}>All Notes</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton, filter === 'fromYou' && styles.activeFilter]}
+          onPress={() => setFilter('fromYou')}
+        >
+          <Text style={styles.filterButtonText}>From You</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton, filter === 'toYou' && styles.activeFilter]}
+          onPress={() => setFilter('toYou')}
+        >
+          <Text style={styles.filterButtonText}>To You</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Button to navigate to AddStarJarScreen */}
       <TouchableOpacity
@@ -60,14 +93,14 @@ export default function StarJarScreen({ navigation }) {
         <Text style={styles.addButtonText}>+ Add Star Jar Note</Text>
       </TouchableOpacity>
 
+      {/* Filtered Notes List */}
       <FlatList
-        data={notes}
+        data={getFilteredNotes()}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.noteCard}>
             <Text style={styles.noteText}>{item.note}</Text>
             <Text style={styles.noteDate}>Date: {item.date}</Text>
-            {/* Separate "To" and "From" */}
             {item.friend === 'You' ? (
               <Text style={styles.noteFriend}>From: You</Text>
             ) : (
@@ -104,6 +137,26 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
     fontFamily: 'Crimson', // Set font to Crimson
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  filterButton: {
+    backgroundColor: '#832161',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+  },
+  activeFilter: {
+    backgroundColor: '#467498', // Highlight active filter
+  },
+  filterButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    fontFamily: 'Crimson',
   },
   addButton: {
     backgroundColor: '#832161', // Updated button color
