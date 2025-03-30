@@ -7,14 +7,42 @@ import {
   Image, 
   SafeAreaView, 
   Alert,
-  ActivityIndicator 
+  ActivityIndicator,
+  TextInput
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { getUserSession, saveUserPhoto } from '../services/DatabaseService';
 
 export default function CameraScreen({ navigation }) {
   const [capturedImage, setCapturedImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [caption, setCaption] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  // Load user session when component mounts
+  useEffect(() => {
+    const loadUserSession = async () => {
+      try {
+        const session = await getUserSession();
+        if (session && session.isLoggedIn) {
+          setCurrentUser({
+            userId: session.userId,
+            username: session.username,
+            firstName: session.firstName
+          });
+        } else {
+          // Handle case where user is not logged in
+          Alert.alert('Authentication Required', 'Please log in to use the Camera feature');
+          navigation.navigate('Login');
+        }
+      } catch (error) {
+        console.error('Failed to get user session:', error);
+      }
+    };
+    
+    loadUserSession();
+  }, []);
   
   // Function to use the device's system camera
   const useSystemCamera = async () => {
@@ -89,9 +117,31 @@ export default function CameraScreen({ navigation }) {
   };
 
   // Save image and navigate back
-  const saveAndGoBack = () => {
-    if (capturedImage) {
-      navigation.navigate('Menu', { capturedImage: capturedImage });
+  const saveAndGoBack = async () => {
+    if (capturedImage && currentUser) {
+      setLoading(true);
+      try {
+        // Save the photo to the database
+        const photoId = await saveUserPhoto(
+          currentUser.userId, 
+          capturedImage,
+          caption // Optional caption
+        );
+        
+        // Navigate back with success message
+        navigation.navigate('Menu', { 
+          photoSaved: true,
+          photoId: photoId,
+          message: 'Photo saved to your collection!' 
+        });
+      } catch (err) {
+        console.error('Error saving photo:', err);
+        Alert.alert('Error', 'Failed to save your photo. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    } else if (!currentUser) {
+      Alert.alert('Error', 'You need to be logged in to save photos');
     } else {
       Alert.alert('Error', 'No image captured');
     }
@@ -136,12 +186,27 @@ export default function CameraScreen({ navigation }) {
     return (
       <SafeAreaView style={styles.container}>
         <Image source={{ uri: capturedImage }} style={styles.preview} />
+        
+        {/* Add caption input */}
+        <View style={styles.captionContainer}>
+          <TextInput
+            style={styles.captionInput}
+            placeholder="Add a caption (optional)"
+            placeholderTextColor="#ccc"
+            value={caption}
+            onChangeText={setCaption}
+          />
+        </View>
+        
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={retakePicture}>
             <Text style={styles.buttonText}>Retake</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={saveAndGoBack}>
-            <Text style={styles.buttonText}>Share Moment</Text>
+          <TouchableOpacity 
+            style={[styles.button, styles.primaryButton]} 
+            onPress={saveAndGoBack}
+          >
+            <Text style={styles.buttonText}>Save Photo</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -243,6 +308,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#6366f1',
   },
   buttonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  captionContainer: {
+    position: 'absolute',
+    bottom: 100,
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  captionInput: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 10,
+    padding: 15,
     color: 'white',
     fontSize: 16,
   },

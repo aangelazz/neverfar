@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Animated,
+  Text,
 } from 'react-native';
 import { logoutUser } from '../services/DatabaseService';
 
@@ -161,6 +162,14 @@ export default function HomePage({ navigation }) {
             resizeMode="contain"
           />
         </TouchableOpacity>
+
+        {/* Add this to your menu options */}
+        <TouchableOpacity
+          style={[styles.menuItem, { backgroundColor: '#6366f1' }]}
+          onPress={() => navigation.navigate('PhotoGallery')}
+        >
+          <Text style={styles.menuItemText}>My Photos</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -242,5 +251,14 @@ const styles = StyleSheet.create({
   logoutImage: {
     width: '100%',
     height: '100%',
+  },
+  menuItem: {
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  menuItemText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });

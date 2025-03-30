@@ -12,6 +12,7 @@ import BucketListScreen from './src/screens/BucketListScreen';
 import NavScreen from './src/screens/NavScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
 import ViewCalendarScreen from './src/screens/ViewCalendarScreen';
+import PhotoGalleryScreen from './src/screens/PhotoGalleryScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -96,6 +97,10 @@ export default function App() {
         <Stack.Screen 
           name="ViewCalendar" 
           component={ViewCalendarScreen} 
+        />
+        <Stack.Screen 
+          name="PhotoGallery" 
+          component={PhotoGalleryScreen} 
         />
       </Stack.Navigator>
     </NavigationContainer>

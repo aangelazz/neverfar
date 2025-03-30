@@ -181,46 +181,41 @@ export const initDatabase = async () => {
   // Ensure test user exists
   memoryDb.ensureTestUser();
   
-  return new Promise((resolve, reject) => {
-    try {
+  try {
+    await new Promise((resolve, reject) => {
       db.transaction(tx => {
+        // Keep your existing tables
+        
+        // Add the photos table
         tx.executeSql(
-          'SELECT * FROM users WHERE username = ?',
-          ['test'],
-          (_, { rows }) => {
-            console.log(`Found ${rows.length} users with username 'test'`);
-            
-            if (rows.length > 0) {
-              console.log('Test user exists:', rows._array[0]);
-              resolve(true);
-            } else {
-              console.log('No test user, creating one...');
-              
-              tx.executeSql(
-                'INSERT INTO users (username, password) VALUES (?, ?)',
-                ['test', 'password123'],
-                () => {
-                  console.log('Created test user');
-                  resolve(true);
-                },
-                (_, error) => {
-                  console.log('Error creating test user:', error);
-                  reject(error);
-                }
-              );
-            }
+          `CREATE TABLE IF NOT EXISTS photos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            userId INTEGER,
+            photoUri TEXT,
+            caption TEXT,
+            timestamp TEXT,
+            latitude REAL,
+            longitude REAL,
+            FOREIGN KEY (userId) REFERENCES users (id)
+          );`,
+          [],
+          () => {
+            console.log('Photos table created or already exists');
+            resolve();
           },
           (_, error) => {
-            console.log('Error checking test user:', error);
+            console.error('Error creating photos table:', error);
             reject(error);
           }
         );
       });
-    } catch (error) {
-      console.log('Error initializing database:', error);
-      reject(error);
-    }
-  });
+    });
+    console.log('Database initialized successfully');
+    return true;
+  } catch (error) {
+    console.error('Database initialization failed:', error);
+    return false;
+  }
 };
 
 // The rest of your functions can remain mostly the same
@@ -483,6 +478,75 @@ export const registerUser = async (username, password, firstName = '', lastName 
   });
 };
 
+// Add these functions to store and retrieve photos
+
+// Function to save a photo to the database
+export const saveUserPhoto = async (userId, photoUri, caption = '') => {
+  return new Promise((resolve, reject) => {
+    if (!userId || !photoUri) {
+      reject(new Error('User ID and photo URI are required'));
+      return;
+    }
+
+    const timestamp = new Date().toISOString();
+    
+    db.transaction(tx => {
+      tx.executeSql(
+        'INSERT INTO photos (userId, photoUri, caption, timestamp) VALUES (?, ?, ?, ?)',
+        [userId, photoUri, caption, timestamp],
+        (_, { insertId }) => {
+          console.log(`Photo saved with ID: ${insertId}`);
+          resolve(insertId);
+        },
+        (_, error) => {
+          console.error('Error saving photo:', error);
+          reject(error);
+        }
+      );
+    });
+  });
+};
+
+// Function to get all photos for a user
+export const getUserPhotos = async (userId) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'SELECT * FROM photos WHERE userId = ? ORDER BY timestamp DESC',
+        [userId],
+        (_, { rows }) => {
+          console.log(`Found ${rows.length} photos for user ${userId}`);
+          resolve(rows._array);
+        },
+        (_, error) => {
+          console.error('Error fetching user photos:', error);
+          reject(error);
+        }
+      );
+    });
+  });
+};
+
+// Function to delete a photo
+export const deleteUserPhoto = async (photoId) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'DELETE FROM photos WHERE id = ?',
+        [photoId],
+        (_, { rowsAffected }) => {
+          console.log(`Deleted photo (${photoId}): ${rowsAffected} row(s) affected`);
+          resolve(rowsAffected > 0);
+        },
+        (_, error) => {
+          console.error(`Error deleting photo ${photoId}:`, error);
+          reject(error);
+        }
+      );
+    });
+  });
+};
+
 export default {
   initDatabase,
   authenticateUser,
@@ -493,5 +557,8 @@ export default {
   logoutUser,
   listAllUsers,
   clearAllSessions,
-  getDatabase
+  getDatabase,
+  saveUserPhoto,
+  getUserPhotos,
+  deleteUserPhoto
 };
