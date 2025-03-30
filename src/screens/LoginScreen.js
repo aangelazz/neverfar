@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Image
+  Button
 } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -18,7 +18,10 @@ import {
   initDatabase,
   authenticateUser,
   registerUser,
-  verifyCredentials
+  verifyCredentials,
+  listAllUsers,
+  clearAllSessions,
+  getUserSession
 } from '../services/DatabaseService';
 
 // Validation schemas
@@ -31,31 +34,48 @@ const LoginSchema = Yup.object().shape({
 
 const RegisterSchema = Yup.object().shape({
   username: Yup.string()
-    .min(3, 'Username must be at least 3 characters')
-    .required('Username is required'),
+    .required('Username is required')
+    .min(3, 'Username must be at least 3 characters'),
   password: Yup.string()
-    .min(6, 'Password must be at least 6 characters')
-    .required('Password is required'),
+    .required('Password is required')
+    .min(6, 'Password must be at least 6 characters'),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref('password'), null], 'Passwords must match')
     .required('Confirm password is required'),
-  firstName: Yup.string()
-    .required('First name is required'),
-  lastName: Yup.string()
-    .required('Last name is required')
+  firstName: Yup.string().required('First name is required'),
+  lastName: Yup.string().required('Last name is required')
 });
 
 export default function LoginScreen({ navigation }) {
-  const [isRegistering, setIsRegistering] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRegistering, setIsRegistering] = useState(false);
+  // Remove the debug state variable
+  // const [debug, setDebug] = useState('');
 
   useEffect(() => {
     const setup = async () => {
       try {
-        // Initialize database
+        console.log('Setting up database...');
+        
+        // Initialize database with test user
         await initDatabase();
+        
+        // Check for existing session
+        const session = await getUserSession();
+        
+        if (session.isLoggedIn) {
+          console.log('Found existing session, navigating to Menu');
+          navigation.replace('Menu');
+          return;
+        }
+        
+        // Remove debug output
+        // const users = await listAllUsers();
+        // setDebug(`Found ${users.length} users. Test user exists: ${!!users.find(u => u.username === 'test')}`);
+        
       } catch (error) {
         console.error('Setup error:', error);
+        Alert.alert('Setup Error', error.message);
       } finally {
         setIsLoading(false);
       }
@@ -66,15 +86,17 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async (values) => {
     try {
+      console.log('Login attempt:', values.username);
+      
       const result = await verifyCredentials(values.username, values.password);
       
       if (result.success) {
         navigation.replace('Menu');
       } else {
-        Alert.alert('Login Failed', 'Invalid username or password');
+        Alert.alert('Login Failed', result.error || 'Invalid username or password');
       }
     } catch (error) {
-      Alert.alert('Login Error', error.message || 'Something went wrong');
+      Alert.alert('Login Error', error.message);
     }
   };
 
@@ -87,11 +109,29 @@ export default function LoginScreen({ navigation }) {
         values.lastName
       );
       
-      await verifyCredentials(values.username, values.password);
-      Alert.alert('Success', 'Registration successful!');
-      navigation.replace('Menu');
+      Alert.alert(
+        'Registration Successful',
+        'Your account has been created. Please log in.',
+        [{ text: 'OK', onPress: () => setIsRegistering(false) }]
+      );
     } catch (error) {
       Alert.alert('Registration Failed', error.message || 'Username may already exist');
+    }
+  };
+  
+  // Reset database function for debugging
+  const resetDatabase = async () => {
+    try {
+      setIsLoading(true);
+      await clearAllSessions();
+      await initDatabase();
+      const users = await listAllUsers();
+      setDebug(`Database reset. Found ${users.length} users.`);
+      Alert.alert('Database Reset', 'Test user has been recreated.');
+    } catch (error) {
+      Alert.alert('Reset Failed', error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -111,6 +151,8 @@ export default function LoginScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.logoContainer}>
           <Text style={styles.logoText}>NeverFar</Text>
+          {/* Remove the debug text here */}
+          {/* <Text style={{color: 'gray', fontSize: 12}}>{debug}</Text> */}
         </View>
 
         {!isRegistering ? (
@@ -268,6 +310,19 @@ export default function LoginScreen({ navigation }) {
             )}
           </Formik>
         )}
+        
+        {/* Remove the Reset Database button */}
+        {/* <TouchableOpacity
+          style={[styles.button, {backgroundColor: '#ff6347', marginTop: 20}]}
+          onPress={resetDatabase}
+        >
+          <Text style={styles.buttonText}>Reset Database</Text>
+        </TouchableOpacity> */}
+        
+        {/* Remove the default login text */}
+        {/* <Text style={{textAlign: 'center', marginTop: 20, color: '#666'}}>
+          Default login: test/password123
+        </Text> */}
       </ScrollView>
     </KeyboardAvoidingView>
   );
