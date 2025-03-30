@@ -1,58 +1,140 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
-import { Camera } from 'expo-camera';
+import React, { useState, useEffect } from 'react';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  TouchableOpacity, 
+  Image, 
+  SafeAreaView, 
+  Alert,
+  ActivityIndicator 
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function CameraScreen({ navigation }) {
-  const [hasPermission, setHasPermission] = useState(null);
-  const [cameraReady, setCameraReady] = useState(false);
-  const [type, setType] = useState('back'); // Default to the back camera
   const [capturedImage, setCapturedImage] = useState(null);
-  const cameraRef = useRef(null);
-
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Function to use the device's system camera
+  const useSystemCamera = async () => {
+    setLoading(true);
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please allow camera access to take photos');
+        return;
+      }
+      
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.7,
+      });
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        console.log("Photo captured:", result.assets[0].uri);
+        setCapturedImage(result.assets[0].uri);
+      }
+    } catch (err) {
+      console.error('Error using system camera:', err);
+      setError(`System camera error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Function to pick an image from the gallery
+  const pickImage = async () => {
+    setLoading(true);
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'We need gallery permissions to make this work!');
+        return;
+      }
+      
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.7,
+      });
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        console.log("Image picked:", result.assets[0].uri);
+        setCapturedImage(result.assets[0].uri);
+      }
+    } catch (err) {
+      console.error('Error picking image:', err);
+      setError('Failed to pick image from gallery');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Automatically open system camera when component mounts
   useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-      console.log('Camera permission status:', status);
-    })();
+    // Uncomment this line to automatically open the camera when screen loads
+    // useSystemCamera();
   }, []);
-
+  
+  // Handle retake
   const retakePicture = () => {
     setCapturedImage(null);
+    setError(null);
+    useSystemCamera();
   };
 
+  // Save image and navigate back
   const saveAndGoBack = () => {
-    navigation.navigate('Home', { capturedImage: capturedImage });
+    if (capturedImage) {
+      navigation.navigate('Menu', { capturedImage: capturedImage });
+    } else {
+      Alert.alert('Error', 'No image captured');
+    }
   };
-
-  if (hasPermission === null) {
+  
+  // Display loading indicator
+  if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Requesting camera permissions...</Text>
-      </View>
+      <SafeAreaView style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#fff" />
+        <Text style={styles.message}>Processing...</Text>
+      </SafeAreaView>
     );
   }
-
-  if (hasPermission === false) {
+  
+  // Display error message
+  if (error) {
     return (
-      <View style={styles.container}>
-        <Text>We need camera permissions to make this app work!</Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={async () => {
-            const { status } = await Camera.requestCameraPermissionsAsync();
-            setHasPermission(status === 'granted');
-          }}
-        >
-          <Text style={styles.buttonText}>Grant Permission</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={[styles.container, styles.centered]}>
+        <Text style={styles.errorMessage}>{error}</Text>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[styles.button, styles.primaryButton]}
+            onPress={useSystemCamera}
+          >
+            <Text style={styles.buttonText}>Try Again</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.buttonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
-
+  
+  // Display captured image
   if (capturedImage) {
     return (
-      <View style={styles.previewContainer}>
+      <SafeAreaView style={styles.container}>
         <Image source={{ uri: capturedImage }} style={styles.preview} />
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={retakePicture}>
@@ -62,110 +144,81 @@ export default function CameraScreen({ navigation }) {
             <Text style={styles.buttonText}>Share Moment</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
-
+  
+  // Display camera options (main screen)
   return (
-    <View style={styles.container}>
-      <Camera
-        style={styles.camera}
-        type={type}
-        ref={cameraRef}
-        onCameraReady={() => {
-          console.log('Camera is ready!');
-          setCameraReady(true);
-        }}
-        ratio="16:9"
-        useCamera2Api={false}
-      >
-        <View style={styles.topControls}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.buttonText}>Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setType(type === 'back' ? 'front' : 'back')}
-            style={styles.flipButton}
-          >
-            <Text style={styles.buttonText}>Flip</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.bottomControls}>
-          {cameraReady && (
-            <TouchableOpacity
-              style={styles.captureButton}
-              onPress={async () => {
-                try {
-                  console.log('Taking picture...');
-                  if (cameraRef.current) {
-                    const photo = await cameraRef.current.takePictureAsync();
-                    console.log('Photo taken successfully:', photo.uri);
-                    setCapturedImage(photo.uri);
-                  } else {
-                    console.log('Camera ref is null');
-                  }
-                } catch (error) {
-                  console.log('Error taking picture:', error);
-                }
-              }}
-            />
-          )}
-        </View>
-      </Camera>
-    </View>
+    <SafeAreaView style={[styles.container, styles.centered]}>
+      <Text style={styles.header}>Capture a Moment</Text>
+      
+      <View style={styles.optionsContainer}>
+        <TouchableOpacity
+          style={[styles.button, styles.primaryButton, styles.fullWidthButton]}
+          onPress={useSystemCamera}
+        >
+          <Text style={styles.buttonText}>Take Photo</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.button, styles.fullWidthButton, { marginTop: 15 }]}
+          onPress={pickImage}
+        >
+          <Text style={styles.buttonText}>Choose from Gallery</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.button, styles.fullWidthButton, { marginTop: 15, backgroundColor: '#555' }]}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.buttonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
   },
-  previewContainer: {
-    flex: 1,
+  centered: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  camera: {
-    flex: 1,
-  },
-  topControls: {
-    flex: 0.1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     padding: 20,
   },
-  bottomControls: {
-    position: 'absolute',
-    bottom: 30,
-    alignSelf: 'center',
-    width: '100%',
-    alignItems: 'center',
+  header: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 30,
+    textAlign: 'center',
   },
-  backButton: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 10,
-    borderRadius: 5,
-  },
-  flipButton: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 10,
-    borderRadius: 5,
-  },
-  captureButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: 'white',
-    borderWidth: 5,
-    borderColor: 'rgba(255,255,255,0.5)',
-  },
-  buttonText: {
-    color: 'white',
+  message: {
+    color: '#fff',
     fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    color: '#ff6b6b',
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  optionsContainer: {
+    width: '100%',
+    padding: 20,
+  },
+  fullWidthButton: {
+    width: '100%',
   },
   preview: {
     flex: 1,
     width: '100%',
+    height: '100%',
   },
   buttonContainer: {
     position: 'absolute',
@@ -174,14 +227,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
     width: '100%',
   },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '90%',
+  },
   button: {
     backgroundColor: 'rgba(0,0,0,0.6)',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
-    width: '40%',
+    width: '48%',
   },
   primaryButton: {
     backgroundColor: '#6366f1',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
   },
 });
