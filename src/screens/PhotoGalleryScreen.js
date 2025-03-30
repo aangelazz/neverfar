@@ -12,7 +12,12 @@ import {
   Dimensions,
   Modal
 } from 'react-native';
-import { getUserSession, getUserPhotos, deleteUserPhoto } from '../services/DatabaseService';
+import { 
+  getUserSession, 
+  getUserPhotos, 
+  deleteUserPhoto,
+  getUserPhotosByUserId  // Add this import
+} from '../services/DatabaseService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const { width } = Dimensions.get('window');
@@ -24,9 +29,13 @@ export default function PhotoGalleryScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [viewingUser, setViewingUser] = useState(null);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  
+
+  // Check if we're viewing someone else's photos
+  const { userId, username } = route.params || {};
+
   // Move the useLayoutEffect inside the component
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -41,6 +50,15 @@ export default function PhotoGalleryScreen({ navigation, route }) {
       ),
     });
   }, [navigation]);
+
+  useEffect(() => {
+    // Set the header title based on whose photos we're viewing
+    if (userId && username) {
+      navigation.setOptions({
+        title: `${username}'s Photos`
+      });
+    }
+  }, [userId, username, navigation]);
   
   // Load user session and photos
   useEffect(() => {
@@ -71,11 +89,21 @@ export default function PhotoGalleryScreen({ navigation, route }) {
         console.log("PhotoGallery: User set:", user);
         setCurrentUser(user);
         
-        // Load user photos with debugging
-        console.log(`PhotoGallery: Loading photos for user ${user.userId}`);
-        const userPhotos = await getUserPhotos(user.userId);
-        console.log(`PhotoGallery: Loaded ${userPhotos.length} photos:`, userPhotos);
-        setPhotos(userPhotos);
+        // Determine whose photos to load
+        let photosToLoad = [];
+        if (userId && userId !== session.userId) {
+          // We're viewing someone else's photos
+          console.log(`PhotoGallery: Loading photos for friend ${userId}`);
+          photosToLoad = await getUserPhotosByUserId(userId);
+          setViewingUser({ userId, username });
+        } else {
+          // Load current user's photos
+          console.log(`PhotoGallery: Loading photos for current user ${user.userId}`);
+          photosToLoad = await getUserPhotos(user.userId);
+        }
+        
+        console.log(`PhotoGallery: Loaded ${photosToLoad.length} photos`);
+        setPhotos(photosToLoad);
       } else {
         console.log("PhotoGallery: No active user session");
         Alert.alert('Authentication Required', 'Please log in to view your photos');
@@ -173,11 +201,15 @@ export default function PhotoGalleryScreen({ navigation, route }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>
-          {currentUser?.firstName ? `${currentUser.firstName}'s Photos` : 'My Photos'}
+          {viewingUser 
+            ? `${viewingUser.username}'s Photos` 
+            : (currentUser?.firstName 
+                ? `${currentUser.firstName}'s Photos` 
+                : 'My Photos')}
         </Text>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.navigate('Nav')} // Navigate to Nav instead of Camera
+          onPress={() => navigation.navigate('Nav')}
         >
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -185,15 +217,27 @@ export default function PhotoGalleryScreen({ navigation, route }) {
       
       {photos.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>You haven't taken any photos yet</Text>
-          <TouchableOpacity
-            style={[styles.button, styles.primaryButton]}
-            onPress={() => navigation.navigate('Camera')}
-          >
-            <Text style={styles.buttonText}>Take a Photo</Text>
-          </TouchableOpacity>
+          {/* Different empty state message based on whose gallery we're viewing */}
+          {viewingUser ? (
+            // Friend's empty gallery - just show message and back button is already at the top
+            <Text style={styles.emptyText}>
+              {viewingUser.username} hasn't added any photos yet
+            </Text>
+          ) : (
+            // Current user's empty gallery - show message and camera button
+            <>
+              <Text style={styles.emptyText}>You haven't taken any photos yet</Text>
+              <TouchableOpacity
+                style={[styles.button, styles.primaryButton]}
+                onPress={() => navigation.navigate('Camera')}
+              >
+                <Text style={styles.buttonText}>Take a Photo</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       ) : (
+        // Regular photo grid when there are photos
         <FlatList
           data={photos}
           keyExtractor={(item) => item.id.toString()}
@@ -202,7 +246,8 @@ export default function PhotoGalleryScreen({ navigation, route }) {
             <TouchableOpacity
               style={styles.photoContainer}
               onPress={() => viewPhoto(item)}
-              onLongPress={() => handleDeletePhoto(item)}
+              // Only allow long-press delete for own photos
+              onLongPress={() => !viewingUser && handleDeletePhoto(item)}
             >
               <Image source={{ uri: item.photoUri }} style={styles.thumbnail} />
               {item.caption ? (
@@ -219,7 +264,7 @@ export default function PhotoGalleryScreen({ navigation, route }) {
         />
       )}
       
-      {/* Photo Modal */}
+      {/* Photo Modal - also update this to only show delete button for own photos */}
       <Modal
         animationType="fade"
         transparent={false}
@@ -251,24 +296,30 @@ export default function PhotoGalleryScreen({ navigation, route }) {
                   <Text style={styles.buttonText}>Close</Text>
                 </TouchableOpacity>
                 
-                <TouchableOpacity
-                  style={[styles.button, styles.dangerButton, styles.modalButton]}
-                  onPress={() => handleDeletePhoto(selectedPhoto)}
-                >
-                  <Text style={styles.buttonText}>Delete</Text>
-                </TouchableOpacity>
+                {/* Only show delete button for own photos */}
+                {!viewingUser && (
+                  <TouchableOpacity
+                    style={[styles.button, styles.dangerButton, styles.modalButton]}
+                    onPress={() => handleDeletePhoto(selectedPhoto)}
+                  >
+                    <Text style={styles.buttonText}>Delete</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </>
           )}
         </SafeAreaView>
       </Modal>
       
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('Camera')}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      {/* Only show the add photo button if viewing your own photos */}
+      {!viewingUser && (
+        <TouchableOpacity 
+          style={styles.fab}
+          onPress={() => navigation.navigate('Camera')}
+        >
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }

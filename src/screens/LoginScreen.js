@@ -11,10 +11,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Button,
-  Image
+  Image,
+  SafeAreaView
 } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
+import * as ImagePicker from 'expo-image-picker';  // Make sure to install this
 import {
   initDatabase,
   authenticateUser,
@@ -52,6 +54,8 @@ export default function LoginScreen({ navigation }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRegistering, setIsRegistering] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   useEffect(() => {
     const setup = async () => {
@@ -102,22 +106,62 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
+  const pickImage = async () => {
+    try {
+      // Request permission
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Sorry, we need camera roll permission to upload profile pictures.');
+        return;
+      }
+      
+      // Launch the image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+      
+      if (!result.canceled && result.assets && result.assets[0].uri) {
+        setProfileImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  };
+
   const handleRegister = async (values) => {
     try {
+      // Check if profile image is provided - prevent registration without it
+      if (!profileImage) {
+        Alert.alert(
+          'Profile Picture Required',
+          'Please upload a profile picture to complete registration.',
+          [{ text: 'OK' }]
+        );
+        return; // Stop the registration process
+      }
+      
+      // Register the user with the profile image
       const userId = await registerUser(
         values.username,
         values.password,
         values.firstName,
-        values.lastName
+        values.lastName,
+        profileImage  // Pass the profileImage URI here
       );
       
-      // Store the firstName right after registration
+      // After successful registration, update the session and navigate to Menu
       await saveUserSession(userId, values.username, values.firstName);
       
+      // Show success message and automatically navigate
       Alert.alert(
         'Registration Successful',
-        'Your account has been created. Please log in.',
-        [{ text: 'OK', onPress: () => setIsRegistering(false) }]
+        'Your account has been created!',
+        [{ text: 'Continue', onPress: () => navigation.replace('Menu') }]
       );
     } catch (error) {
       Alert.alert('Registration Failed', error.message || 'Username may already exist');
@@ -300,9 +344,38 @@ export default function LoginScreen({ navigation }) {
                   )}
                 </View>
 
+                <View style={styles.imagePickerContainer}>
+                  <Text style={styles.label}>Profile Picture <Text style={styles.requiredLabel}>(Required)</Text></Text>
+                  <TouchableOpacity onPress={pickImage} style={[
+                    styles.imagePicker,
+                    !profileImage && styles.imagePickerRequired // Add red border when no image is selected
+                  ]}>
+                    {profileImage ? (
+                      <Image source={{ uri: profileImage }} style={styles.profilePreview} />
+                    ) : (
+                      <View style={styles.imagePickerPlaceholder}>
+                        <Text style={styles.imagePickerText}>Tap to upload profile picture</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  {!profileImage && (
+                    <Text style={styles.errorText}>Profile picture is required</Text>
+                  )}
+                </View>
+
                 <TouchableOpacity
                   style={styles.button}
-                  onPress={handleSubmit}
+                  onPress={() => {
+                    setFormSubmitted(true);
+                    if (!profileImage) {
+                      Alert.alert(
+                        'Profile Picture Required',
+                        'Please upload a profile picture to complete registration.'
+                      );
+                      return;
+                    }
+                    handleSubmit();
+                  }}
                 >
                   <Text style={styles.buttonText}>REGISTER</Text>
                 </TouchableOpacity>
@@ -408,5 +481,42 @@ const styles = StyleSheet.create({
     color: '#6366f1',
     fontSize: 14,
     fontWeight: '500',
+  },
+  imagePickerContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  imagePicker: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#e1e1e1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#6366f1',
+  },
+  profilePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePickerText: {
+    color: '#666',
+    textAlign: 'center',
+    padding: 10,
+  },
+  imagePickerRequired: {
+    borderColor: '#ef4444', // Red border color
+  },
+  imagePickerPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+    width: '100%',
+  },
+  requiredLabel: {
+    color: '#ef4444',
+    fontWeight: 'bold',
   },
 });

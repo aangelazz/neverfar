@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,29 +7,73 @@ import {
   Dimensions,
   Animated,
   Text,
+  ActivityIndicator,
 } from 'react-native';
-import { logoutUser } from '../services/DatabaseService';
-
-const friends = [
-  { id: 1, image: require('../../assets/images/angela.png') },
-  { id: 2, image: 'https://randomuser.me/api/portraits/men/32.jpg' },
-  { id: 3, image: 'https://randomuser.me/api/portraits/women/44.jpg' },
-  { id: 4, image: 'https://randomuser.me/api/portraits/men/73.jpg' },
-  { id: 5, image: 'https://randomuser.me/api/portraits/women/25.jpg' },
-  { id: 6, image: 'https://randomuser.me/api/portraits/men/12.jpg' },
-];
+import { logoutUser, getUserSession, getUserFriends, getUserProfileImage } from '../services/DatabaseService';
 
 const { width } = Dimensions.get('window');
-const radius = width * 0.35;
+const radius = width * 0.35; // Distance from center to friend icons
 
 export default function HomePage({ navigation }) {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userFriends, setUserFriends] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
   const heartScale = useRef(new Animated.Value(1)).current;
   const messageScale = useRef(new Animated.Value(1)).current;
   const message1Opacity = useRef(new Animated.Value(0)).current;
   const message2Opacity = useRef(new Animated.Value(0)).current;
 
+  // Load user session and friends
   useEffect(() => {
-    // Heart pulse
+    const loadUserData = async () => {
+      try {
+        // Get current user session
+        const session = await getUserSession();
+        
+        if (session && session.isLoggedIn) {
+          setCurrentUser({
+            userId: session.userId,
+            username: session.username,
+            firstName: session.firstName || session.username
+          });
+          
+          // Get user's friends
+          const friends = await getUserFriends(session.userId);
+          console.log('Loaded friends:', friends);
+          
+          // If the user has friends, process them - otherwise friendsWithImages will be empty array
+          if (friends && friends.length > 0) {
+            // Fetch profile images for each friend
+            const friendsWithImages = await Promise.all(
+              friends.map(async (friend) => {
+                const profileImage = await getUserProfileImage(friend.id);
+                return {
+                  ...friend,
+                  image: profileImage || `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 100)}.jpg`
+                };
+              })
+            );
+            setUserFriends(friendsWithImages);
+          } else {
+            // Set empty array instead of default friends
+            setUserFriends([]);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        setUserFriends([]); // Set empty array on error
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadUserData();
+  }, []);
+
+  // Animation effects
+  useEffect(() => {
+    // Heart pulse animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(heartScale, {
@@ -45,48 +89,47 @@ export default function HomePage({ navigation }) {
       ])
     ).start();
 
-    // Pulse messages
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(messageScale, {
-          toValue: 1.1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(messageScale, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    // Show yNRA.png, then clickToContinue.png, then fade out
+    // Message 1 animation
     Animated.sequence([
+      Animated.delay(1000),
       Animated.timing(message1Opacity, {
         toValue: 1,
         duration: 800,
         useNativeDriver: true,
       }),
-      Animated.delay(3000),
+      Animated.delay(2000),
       Animated.timing(message1Opacity, {
         toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(message2Opacity, {
-        toValue: 1,
         duration: 800,
         useNativeDriver: true,
       }),
-      Animated.delay(3000),
+      Animated.delay(500),
       Animated.timing(message2Opacity, {
-        toValue: 0,
-        duration: 400,
+        toValue: 1,
+        duration: 800,
         useNativeDriver: true,
       }),
     ]).start();
   }, []);
+
+  if (loading) {
+    return (
+      <View style={[styles.safeContainer, styles.centered]}>
+        <ActivityIndicator size="large" color="#832161" />
+        <Text>Loading your friends...</Text>
+      </View>
+    );
+  }
+
+  // Create fixed positions for 6 friend slots
+  const friendPositions = [];
+  for (let i = 0; i < 6; i++) {
+    // Start at -90 degrees (top) and go clockwise
+    const angle = ((2 * Math.PI) / 6) * i - Math.PI / 2;
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    friendPositions.push({ x, y, angle });
+  }
 
   return (
     <View style={styles.safeContainer}>
@@ -94,7 +137,12 @@ export default function HomePage({ navigation }) {
         <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
 
         <View style={styles.circleContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate('Nav')} activeOpacity={0.9}>
+          {/* Heart in center */}
+          <TouchableOpacity 
+            style={styles.heartButtonWrapper}
+            onPress={() => navigation.navigate('Nav')} 
+            activeOpacity={0.9}
+          >
             <View style={styles.heartWrapper}>
               <Animated.Image
                 source={require('../../assets/images/heart.png')}
@@ -124,27 +172,41 @@ export default function HomePage({ navigation }) {
             </View>
           </TouchableOpacity>
 
-          {friends.map((friend, index) => {
-  const angle = (2 * Math.PI / friends.length) * index;
-  const x = Math.cos(angle) * radius;
-  const y = Math.sin(angle) * radius;
+          {/* Render friends at fixed positions */}
+          {friendPositions.map((position, index) => {
+            // Only render if there's a friend for this position
+            const friend = userFriends[index];
+            if (!friend) return null;
 
-  return (
-    <Image
-        key={friend.id}
-        source={typeof friend.image === 'string' ? { uri: friend.image } : friend.image}
-        style={[
-          styles.friendAvatar,
-          {
-            transform: [{ translateX: x }, { translateY: y }],
-          },
-        ]}
-      />
-    );
-  })}
+            return (
+              <TouchableOpacity 
+                key={friend.id || index}
+                style={[
+                  styles.friendAvatarContainer,
+                  {
+                    transform: [
+                      { translateX: position.x },
+                      { translateY: position.y }
+                    ]
+                  }
+                ]}
+                onPress={() => {
+                  navigation.navigate('PhotoGallery', { 
+                    userId: friend.id, 
+                    username: friend.username 
+                  });
+                }}
+              >
+                <Image
+                  source={typeof friend.image === 'string' ? { uri: friend.image } : friend.image}
+                  style={styles.friendAvatar}
+                />
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        {/* Logout image button in bottom left */}
+        {/* Logout button */}
         <TouchableOpacity
           style={styles.logoutImageWrapper}
           onPress={async () => {
@@ -192,6 +254,9 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     position: 'relative',
   },
+  heartButtonWrapper: {
+    zIndex: 10, // Make sure heart stays on top
+  },
   heartWrapper: {
     position: 'relative',
     width: width * 0.4,
@@ -215,17 +280,21 @@ const styles = StyleSheet.create({
     ],
     zIndex: 5,
   },
-  friendAvatar: {
+  friendAvatarContainer: {
     position: 'absolute',
+    width: width * 0.2, // Only as wide as the avatar
+    height: width * 0.2, // Only as tall as the avatar
+    alignItems: 'center',
+    justifyContent: 'center',
+    left: width * 0.45 - width * 0.1, // Center X (container width/2 - avatar width/2)
+    top: width * 0.45 - width * 0.1,  // Center Y
+  },
+  friendAvatar: {
     width: width * 0.2,
     height: width * 0.2,
     borderRadius: width * 0.1,
     borderWidth: 2,
     borderColor: '#832161',
-    top: '50%',
-    left: '50%',
-    marginLeft: -(width * 0.2) / 2,
-    marginTop: -(width * 0.2) / 2,
     overflow: 'hidden',
     shadowColor: '#467599',
     shadowOffset: { width: 0, height: 2 },
@@ -244,13 +313,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  menuItem: {
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  menuItemText: {
-    color: '#fff',
-    fontSize: 16,
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

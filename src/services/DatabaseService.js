@@ -1,6 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
 
 // Check if running on web
 const isWeb = Platform.OS === 'web';
@@ -420,39 +421,67 @@ export const listAllUsers = async () => {
 };
 
 // User registration
-export const registerUser = async (username, password, firstName = '', lastName = '') => {
-  console.log(`Registering user with firstName: ${firstName}`);
+export const registerUser = async (username, password, firstName = '', lastName = '', profileImage = null) => {
+  console.log(`Registering user with firstName: ${firstName} and profile image: ${profileImage ? 'provided' : 'not provided'}`);
   
-  return new Promise((resolve, reject) => {
-    dbMemory.transaction(tx => {
-      // Check if username exists
-      tx.executeSql(
-        'SELECT * FROM users WHERE username = ?',
-        [username],
-        (_, { rows }) => {
-          if (rows.length > 0) {
-            reject(new Error('Username already exists'));
-          } else {
-            // Insert new user WITH firstName and lastName
-            tx.executeSql(
-              'INSERT INTO users (username, password, firstName, lastName) VALUES (?, ?, ?, ?)',
-              [username, password, firstName, lastName],
-              (_, { insertId }) => {
-                console.log('User registered with ID and firstName:', insertId, firstName);
-                resolve(insertId);
-              },
-              (_, error) => {
-                reject(error);
-              }
-            );
-          }
-        },
-        (_, error) => {
-          reject(error);
+  try {
+    // Check if username exists first
+    const usersJson = await AsyncStorage.getItem('users');
+    const users = usersJson ? JSON.parse(usersJson) : [];
+    
+    // Check if username exists
+    const existingUser = users.find(u => u.username === username);
+    if (existingUser) {
+      throw new Error('Username already exists');
+    }
+    
+    // Create new user with all fields
+    const newUserId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+    const newUser = {
+      id: newUserId,
+      username,
+      password,
+      firstName: firstName || '',
+      lastName: lastName || '',
+      hasProfileImage: !!profileImage, // Flag to indicate if user has a profile image
+      createdAt: new Date().toISOString()
+    };
+    
+    // Add to users array
+    users.push(newUser);
+    
+    // Save users to AsyncStorage
+    await AsyncStorage.setItem('users', JSON.stringify(users));
+    
+    // If profile image is provided, save it
+    if (profileImage) {
+      // Try to save image to file system for native platforms
+      let finalImageUri = profileImage;
+      
+      try {
+        // Save image to file system if possible
+        if (Platform.OS !== 'web') {
+          finalImageUri = await saveImageToFileSystem(profileImage, newUserId);
         }
-      );
-    });
-  });
+      } catch (error) {
+        console.error('Error saving image to file system:', error);
+        // Continue with original URI if there's an error
+        finalImageUri = profileImage;
+      }
+      
+      // Now save the profile image reference in AsyncStorage
+      const profileImagesJson = await AsyncStorage.getItem('profile_images');
+      const profileImages = profileImagesJson ? JSON.parse(profileImagesJson) : {};
+      profileImages[newUserId] = finalImageUri;
+      await AsyncStorage.setItem('profile_images', JSON.stringify(profileImages));
+      console.log(`Saved profile image for user ${newUserId}`);
+    }
+    
+    return newUserId;
+  } catch (error) {
+    console.error('Error registering user:', error);
+    throw error;
+  }
 };
 
 // UPDATED PHOTO FUNCTIONS USING ASYNCSTORAGE
@@ -561,6 +590,307 @@ export const deleteUserPhoto = async (photoId) => {
   }
 };
 
+// Add these functions to your DatabaseService
+
+// Store user friends in AsyncStorage
+const FRIENDS_STORAGE_KEY = 'user_friends';
+
+// Function to add a friend relationship
+export const addFriend = async (userId, friendId) => {
+  try {
+    console.log(`Adding friend ${friendId} to user ${userId}`);
+    
+    // Safety check - prevent adding yourself as a friend
+    if (userId == friendId) {
+      return { success: false, message: 'You cannot add yourself as a friend' };
+    }
+    
+    // Get current friends
+    const friendsJson = await AsyncStorage.getItem('user_friends');
+    const allFriendships = friendsJson ? JSON.parse(friendsJson) : {};
+    
+    // Initialize user's friend array if it doesn't exist
+    if (!allFriendships[userId]) {
+      allFriendships[userId] = [];
+    }
+    
+    // Check if already a friend (handle both string and number IDs)
+    const currentFriends = allFriendships[userId];
+    if (currentFriends.includes(friendId) || 
+        currentFriends.includes(friendId.toString()) || 
+        currentFriends.includes(Number(friendId))) {
+      return { success: false, message: 'This user is already your friend' };
+    }
+    
+    // Check if max friends reached
+    if (currentFriends.length >= 6) {
+      return { success: false, message: 'You can only have up to 6 friends' };
+    }
+    
+    // Add to friends - store ID as string for consistency
+    allFriendships[userId].push(friendId.toString());
+    
+    // Save to AsyncStorage
+    await AsyncStorage.setItem('user_friends', JSON.stringify(allFriendships));
+    console.log(`Friend ${friendId} added successfully to user ${userId}`);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error adding friend:', error);
+    return { success: false, message: 'An error occurred' };
+  }
+};
+
+/**
+ * Remove a friend relationship
+ * @param {number|string} userId - Current user's ID
+ * @param {number|string} friendId - ID of the friend to remove
+ * @returns {Promise<object>} - Result object with success status
+ */
+export const removeFriend = async (userId, friendId) => {
+  try {
+    console.log(`Removing friend ${friendId} from user ${userId}`);
+    
+    // Get existing friend relationships from AsyncStorage
+    const friendsJson = await AsyncStorage.getItem('user_friends');
+    const allFriendships = friendsJson ? JSON.parse(friendsJson) : {};
+    
+    // Check if the user has any friends stored
+    if (!allFriendships[userId]) {
+      console.log(`No friends found for user ${userId}`);
+      return { success: false, message: 'No friends to remove' };
+    }
+    
+    // Get current friends array
+    const currentFriends = allFriendships[userId] || [];
+    
+    // Check if friend exists in the list
+    if (!currentFriends.includes(friendId.toString()) && !currentFriends.includes(Number(friendId))) {
+      console.log(`Friend ${friendId} not found in user's friend list`);
+      return { success: false, message: 'Friend not found in your friends list' };
+    }
+    
+    // Remove friendId from user's friends (handles both string and number IDs)
+    allFriendships[userId] = currentFriends.filter(
+      id => id !== friendId && id !== friendId.toString() && id !== Number(friendId)
+    );
+    
+    // Save updated friendships back to AsyncStorage
+    await AsyncStorage.setItem('user_friends', JSON.stringify(allFriendships));
+    console.log(`Friend ${friendId} successfully removed from user ${userId}`);
+    
+    return { success: true, message: 'Friend removed successfully' };
+  } catch (error) {
+    console.error('Error removing friend:', error);
+    return { success: false, message: 'Failed to remove friend' };
+  }
+};
+
+// Function to get user's friends
+export const getUserFriends = async (userId) => {
+  try {
+    console.log(`Getting friends for user ${userId}`);
+    
+    // Get friend relationships from AsyncStorage
+    const friendsJson = await AsyncStorage.getItem('user_friends');
+    const allFriendships = friendsJson ? JSON.parse(friendsJson) : {};
+    
+    // Get user's friend IDs (convert to string for comparison)
+    const friendIds = allFriendships[userId] || [];
+    console.log(`Found ${friendIds.length} friend IDs:`, friendIds);
+    
+    // If no friends, return empty array
+    if (friendIds.length === 0) {
+      return [];
+    }
+    
+    // Get all users to lookup friend details
+    const usersJson = await AsyncStorage.getItem('users');
+    const users = usersJson ? JSON.parse(usersJson) : [];
+    
+    // Map friend IDs to user objects
+    const friends = friendIds
+      .map(friendId => {
+        // Handle both string and number IDs when finding the user
+        const user = users.find(u => 
+          u.id === friendId || 
+          u.id === Number(friendId) || 
+          u.id.toString() === friendId.toString()
+        );
+        
+        if (user) {
+          return {
+            id: user.id,
+            username: user.username,
+            firstName: user.firstName || '',
+            lastName: user.lastName || ''
+          };
+        }
+        return null;
+      })
+      .filter(Boolean); // Remove any null entries (friends that weren't found)
+    
+    console.log(`Returning ${friends.length} friends for user ${userId}`);
+    return friends;
+  } catch (error) {
+    console.error('Error getting user friends:', error);
+    return [];
+  }
+};
+
+// Function to get a user's profile image
+export const getUserProfileImage = async (userId) => {
+  try {
+    // First check if we have a stored profile image
+    const profileImagesJson = await AsyncStorage.getItem('profile_images');
+    const profileImages = profileImagesJson ? JSON.parse(profileImagesJson) : {};
+    
+    // Return the profile image if it exists
+    if (profileImages[userId]) {
+      return profileImages[userId];
+    }
+    
+    // Otherwise return null (will use default image)
+    return null;
+  } catch (error) {
+    console.error('Error getting profile image:', error);
+    return null;
+  }
+};
+
+// Function to set a user's profile image
+export const setUserProfileImage = async (userId, imageUri) => {
+  try {
+    // Get existing profile images
+    const profileImagesJson = await AsyncStorage.getItem('profile_images');
+    const profileImages = profileImagesJson ? JSON.parse(profileImagesJson) : {};
+    
+    // Set this user's profile image
+    profileImages[userId] = imageUri;
+    
+    // Save updated profile images
+    await AsyncStorage.setItem('profile_images', JSON.stringify(profileImages));
+    
+    return true;
+  } catch (error) {
+    console.error('Error setting profile image:', error);
+    return false;
+  }
+};
+
+// Function to get photos by a specific user
+export const getUserPhotosByUserId = async (userId) => {
+  try {
+    // Get all photos from AsyncStorage
+    const photosJson = await AsyncStorage.getItem('photos');
+    
+    if (!photosJson) {
+      return [];
+    }
+    
+    const photos = JSON.parse(photosJson);
+    
+    // Filter by this user id
+    const userPhotos = photos
+      .filter(photo => photo.userId == userId)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    return userPhotos;
+  } catch (error) {
+    console.error("Error getting user photos by ID:", error);
+    return [];
+  }
+};
+
+// Add this function to store consistent profile images
+
+// Constants
+const PROFILE_IMAGES_KEY = 'profile_images_mapping';
+
+// Get or generate a consistent profile image for a user
+export const getConsistentProfileImage = async (userId) => {
+  try {
+    // First check if the user has an actual profile image
+    const profileImagesJson = await AsyncStorage.getItem('profile_images');
+    const profileImages = profileImagesJson ? JSON.parse(profileImagesJson) : {};
+    
+    // If user has a custom profile image, return it
+    if (profileImages[userId]) {
+      console.log(`Found stored profile image for user ${userId}`);
+      return profileImages[userId];
+    }
+    
+    // Check if we've already assigned a random image
+    const randomImagesJson = await AsyncStorage.getItem('random_profile_images');
+    const randomImages = randomImagesJson ? JSON.parse(randomImagesJson) : {};
+    
+    // If we've already assigned a random image, return it
+    if (randomImages[userId]) {
+      console.log(`Found random profile image for user ${userId}`);
+      return randomImages[userId];
+    }
+    
+    // Generate and store a random image for this user
+    console.log(`Generating new random profile image for user ${userId}`);
+    const gender = Math.random() > 0.5 ? 'men' : 'women';
+    const imageNumber = Math.floor(Math.random() * 100);
+    const randomImageUrl = `https://randomuser.me/api/portraits/${gender}/${imageNumber}.jpg`;
+    
+    // Store this assignment for future use
+    randomImages[userId] = randomImageUrl;
+    await AsyncStorage.setItem('random_profile_images', JSON.stringify(randomImages));
+    
+    return randomImageUrl;
+  } catch (error) {
+    console.error('Error getting consistent profile image:', error);
+    // Fallback to a default image
+    return `https://randomuser.me/api/portraits/lego/1.jpg`;
+  }
+};
+
+// Add this function to save the image to the file system
+export const saveImageToFileSystem = async (imageUri, userId) => {
+  try {
+    // Only works on native platforms
+    if (Platform.OS === 'web') {
+      // For web, just return the original URI
+      return imageUri;
+    }
+    
+    // Make sure FileSystem is available
+    if (!FileSystem) {
+      console.log('FileSystem not available, returning original URI');
+      return imageUri;
+    }
+    
+    // Create directory if it doesn't exist
+    const profileDirectory = `${FileSystem.documentDirectory}profiles/`;
+    const dirInfo = await FileSystem.getInfoAsync(profileDirectory);
+    
+    if (!dirInfo.exists) {
+      await FileSystem.makeDirectoryAsync(profileDirectory, { intermediates: true });
+    }
+    
+    // Generate a unique filename
+    const filename = `profile_${userId}_${Date.now()}.jpg`;
+    const newUri = `${profileDirectory}${filename}`;
+    
+    // Copy the image to our app's file system
+    await FileSystem.copyAsync({
+      from: imageUri,
+      to: newUri
+    });
+    
+    console.log(`Image saved to file system at: ${newUri}`);
+    return newUri;
+  } catch (error) {
+    console.error('Error saving image to file system:', error);
+    // Return original URI if there's an error
+    return imageUri;
+  }
+};
+
+// Add these to your default export
 export default {
   initDatabase,
   authenticateUser,
@@ -574,5 +904,13 @@ export default {
   getDatabase,
   saveUserPhoto,
   getUserPhotos,
-  deleteUserPhoto
+  deleteUserPhoto,
+  addFriend,
+  removeFriend,
+  getUserFriends,
+  getUserProfileImage,
+  setUserProfileImage,
+  getUserPhotosByUserId,
+  getConsistentProfileImage,
+  saveImageToFileSystem
 };
