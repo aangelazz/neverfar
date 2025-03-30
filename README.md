@@ -1,58 +1,79 @@
-# Welcome to your Expo app 👋
+NeverFar - Stay Connected with Friends
+NeverFar is a React Native mobile application built with Expo that helps you stay connected with friends through photo sharing and interactive features. The app provides a simple and intuitive interface for maintaining friendships, no matter the distance.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Features
+User Authentication: Create an account or use the test account to explore the app
+Friend Management: Add up to 6 friends and view their profiles
+Photo Sharing: Upload and share photos with your friends
+Interactive Home Screen: Navigate through a visually appealing heart-centered interface
+Profile Images: Set your profile image during account creation
+Getting Started
+Prerequisites
+Node.js (v14 or newer)
+npm or yarn
+iOS Simulator, Android Emulator, or physical device with Expo Go
+Installation
+Clone the repository
 
-## Get started
+neverfar
+Install dependencies
 
-1. Install dependencies
+install
+Start the development server
 
-   ```bash
-   npm install
-   ```
+start
+Launch the app in your preferred environment:
 
-2. Start the app
+Press i for iOS simulator
+Press a for Android emulator
+Scan the QR code with Expo Go on your physical device
+Testing
+You can use the test account to explore the app:
 
-   ```bash
-    npx expo start
-   ```
+Username: test
+Password: password123
+Technical Notes
+Local Database: The app uses a local database (AsyncStorage), meaning that user accounts and data are stored on the device.
+Test User: A default test user is automatically created with a predefined profile image.
+Image Storage: Profile images and shared photos are stored locally on the device.
+Cross-Platform: Works on both iOS and Android devices through React Native.
+App Configuration
+This app is built with Expo SDK 52.0.0 and includes the following configuration:
 
-In the output, you'll find options to open the app in a
+App Name: NeverFar
+Version: 1.0.0
+Orientation: Portrait mode only
+Bundle Identifiers:
+iOS: com.a6zhuang.neverfar
+Android: com.a6zhuang.neverfar
+Plugins:
+expo-camera (with custom permission messages)
+expo-image-picker
+expo-sqlite
+expo-secure-store
+expo-font
+Custom Fonts: CrimsonPro font family
+Important Limitations
+The database is not remote or cloud-based, meaning that accounts and data are device-specific
+Testing should be performed on a single device (physical device or simulator)
+Friends can only be added between accounts created on the same device
+Future Enhancements
+Remote database integration for cross-device functionality
+Enhanced profile customization options
+Real-time chat features
+Location sharing between friends
+Notification system for friend requests and photo uploads
+Development
+This project is built with:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+React Native (with Expo)
+AsyncStorage for data persistence
+Custom memory database implementation
+File system integration for image storage
+Contributing
+Contributions are welcome! Please feel free to submit a pull request or open issues to improve the application.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
-
-NOTES
-
-- The database of users is NOT remote, meaning that only accounts made on the same device will appear. This is a result of React Native's iOS/mobile structure, meaning that the storage environments are isolated. Testing should only be done on the same device (physical device or iOS simulator)
-
-UPGRADES
-
-- can make the profile picture customizable, either uppon account creation or under a separate screen to change profile
+Happy connecting with NeverFar! 💙
