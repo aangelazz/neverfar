@@ -163,7 +163,7 @@ export default function BucketListScreen({ navigation }) { // Add navigation pro
         </TouchableOpacity>
       </View>
       
-      <Text style={styles.username}>{currentUser.firstName}</Text>
+      <Text style={styles.username}>{currentUser.firstName}'s Bucket List</Text>
       
       <TouchableOpacity
         style={[styles.button, loading && styles.disabledButton]} // Apply styles and a disabled style if loading
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    backgroundColor: 'rgba(188, 210, 238,0.7)', // Light blue background
+    backgroundColor: '#832161', // Light blue background
     paddingVertical: 12, // Vertical padding
     paddingHorizontal: 20, // Horizontal padding
     alignItems: 'center', // Center the text
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   },
   
   buttonText: {
-    color: '#52050A', // Dark red text color
+    color: '#bcd2ee', // Dark red text color
     fontSize: 16, // Font size
     fontWeight: 'bold', // Bold text
   },
@@ -276,12 +276,12 @@ const styles = StyleSheet.create({
     position: 'absolute', // Position the button absolutely
     top: width*0.04, // Distance from the top of the screen
     left: width*0.3, // Distance from the left of the screen
-    backgroundColor: '#832161', // Keep the background color
+    backgroundColor: 'rgba(210, 130, 166, 0.7)', // Keep the background color
     paddingVertical: 8, // Vertical padding
     paddingHorizontal: 12, // Horizontal padding
   },
   backButtonText: {
-    color: 'white',
+    color: '56200A', // Dark red text color
     fontWeight: '500',
   },
   username: {
@@ -319,12 +319,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 14,
     borderRadius: 5,
-    backgroundColor: 'rgba(188, 210, 238,0.7)',
+    backgroundColor: 'rgba(210, 130, 166, 0.7)',
   },
   listItem: {
     marginBottom: 10,
     padding: 10,
-    backgroundColor: 'rgba(188, 210, 238,0.7)',
+    backgroundColor: 'rgba(210, 130, 166, 0.7)',
     borderRadius: 5,
   },
   promptText: {
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   timestamp: {
-    color: '#aaa',
+    color: '#52050A',
     fontSize: 12,
     textAlign: 'right',
   },

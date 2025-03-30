@@ -1,5 +1,5 @@
 import React, { useState, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Button, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import ical from 'ical.js';
@@ -18,7 +18,6 @@ export default function CalendarScreen({ navigation }) {
   // Configure the header
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: 'Together Time', // Updated header title
       headerStyle: {
         backgroundColor: '#467498', // Set header background color
       },
@@ -27,6 +26,7 @@ export default function CalendarScreen({ navigation }) {
         color: '#fff', // Set header text color to white
         fontWeight: 'bold',
       },
+      headerBackTitle: 'Navigation', // Set back button text
     });
   }, [navigation]);
 
@@ -38,6 +38,7 @@ export default function CalendarScreen({ navigation }) {
 
     console.log('DocumentPicker result:', result); // Debug log
 
+    // Check if the result contains assets
     if (result.assets && result.assets.length > 0) {
       const file = result.assets[0]; // Get the first file
       console.log('File selected:', file); // Debug log
@@ -95,9 +96,6 @@ export default function CalendarScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Heading */}
-      <Text style={styles.heading}>Find time to catch up with your friends!</Text>
-
       {/* Upload Calendar Button */}
       <TouchableOpacity style={styles.button} onPress={pickFile}>
         <Text style={styles.buttonText}>Upload Calendar (.ics)</Text>
@@ -123,15 +121,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#d282a6', // Updated screen background color
-    padding: 20,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff', // Updated heading text color to white
-    textAlign: 'center',
-    marginBottom: 10, // Reduced margin to shift it up
-    marginTop: -20, // Added negative margin to shift it further up
   },
   button: {
     backgroundColor: '#832161', // Updated button background color
