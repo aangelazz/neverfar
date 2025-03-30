@@ -119,3 +119,56 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+const viewCalendarStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  noEventsText: {
+    fontSize: 16,
+    color: '#fff',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  eventBlock: {
+    backgroundColor: '#333',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  eventTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffd33d',
+  },
+  eventTime: {
+    fontSize: 14,
+    color: '#fff',
+    marginTop: 5,
+  },
+  breakBlock: {
+    backgroundColor: '#007bff',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  breakText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  breakTime: {
+    fontSize: 14,
+    color: '#fff',
+    marginTop: 5,
+  },
+});
