@@ -376,7 +376,7 @@ export default function FriendsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#bcd2ed', // Updated background color for the friends list
   },
   centered: {
     justifyContent: 'center',
@@ -389,12 +389,12 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 15,
-    backgroundColor: '#6366f1',
+    backgroundColor: '#467498', // Updated header background color
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#fff', // Updated header text color
   },
   subTitle: {
     fontSize: 14,
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   viewButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#467498', // Updated button color for "View Photos"
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 5,
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   addButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#832161', // Updated "Add Friend" button color
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 5,
@@ -536,5 +536,5 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#832161', // Dark pink text
-  }
+  },
 });

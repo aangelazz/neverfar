@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AddStarJarScreen from '../components/AddStarJarScreen';
+import { Picker } from '@react-native-picker/picker'; // Import Picker for dropdown
 
 export default function StarJarScreen({ navigation }) {
   const [notes, setNotes] = useState([]);
@@ -116,6 +116,73 @@ export default function StarJarScreen({ navigation }) {
   );
 }
 
+export function AddStarJarScreen({ route, navigation }) {
+  const { addNote } = route.params;
+  const [note, setNote] = useState('');
+  const [selectedFriend, setSelectedFriend] = useState(''); // State for selected friend
+  const [friends, setFriends] = useState([]); // State for friends list
+
+  // Load friends list from AsyncStorage or database
+  useEffect(() => {
+    const loadFriends = async () => {
+      try {
+        const storedFriends = await AsyncStorage.getItem('friendsList');
+        const friends = storedFriends ? JSON.parse(storedFriends) : [];
+        setFriends(friends);
+      } catch (error) {
+        console.error('Failed to load friends list:', error);
+      }
+    };
+
+    loadFriends();
+  }, []);
+
+  const handleAddNote = async () => {
+    if (!note || !selectedFriend) {
+      Alert.alert('Error', 'Please enter a note and select a friend.');
+      return;
+    }
+
+    const newNote = {
+      id: Date.now().toString(),
+      note,
+      date: new Date().toISOString().split('T')[0],
+      friend: selectedFriend,
+    };
+
+    addNote(newNote);
+    navigation.goBack();
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Add Star Jar Note</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Write your note here..."
+        value={note}
+        onChangeText={setNote}
+      />
+      <Text style={styles.label}>To:</Text>
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={selectedFriend}
+          onValueChange={(itemValue) => setSelectedFriend(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Select a friend" value="" />
+          {friends.map((friend) => (
+            <Picker.Item key={friend.id} label={friend.name} value={friend.name} />
+          ))}
+        </Picker>
+      </View>
+      <TouchableOpacity style={styles.addButton} onPress={handleAddNote}>
+        <Text style={styles.addButtonText}>Add Note</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -206,5 +273,25 @@ const styles = StyleSheet.create({
     color: '#52050a', // Updated "To/From" text color
     marginTop: 5,
     fontFamily: 'Crimson', // Set font to Crimson
+  },
+  input: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    color: '#467498',
+    marginBottom: 10,
+  },
+  pickerContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  picker: {
+    height: 50,
+    width: '100%',
   },
 });
