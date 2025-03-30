@@ -1,5 +1,12 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  Animated,
+} from 'react-native';
 import { logoutUser } from '../services/DatabaseService';
 
 const friends = [
@@ -16,8 +23,12 @@ const radius = width * 0.35;
 
 export default function HomePage({ navigation }) {
   const heartScale = useRef(new Animated.Value(1)).current;
+  const messageScale = useRef(new Animated.Value(1)).current;
+  const message1Opacity = useRef(new Animated.Value(0)).current;
+  const message2Opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Heart pulse
     Animated.loop(
       Animated.sequence([
         Animated.timing(heartScale, {
@@ -32,6 +43,48 @@ export default function HomePage({ navigation }) {
         }),
       ])
     ).start();
+
+    // Pulse messages
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(messageScale, {
+          toValue: 1.1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(messageScale, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Show yNRA.png, then clickToContinue.png, then fade out
+    Animated.sequence([
+      Animated.timing(message1Opacity, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.delay(3000),
+      Animated.timing(message1Opacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(message2Opacity, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.delay(3000),
+      Animated.timing(message2Opacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
 
   return (
@@ -40,9 +93,35 @@ export default function HomePage({ navigation }) {
         <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
 
         <View style={styles.circleContainer}>
-          <Animated.View style={[styles.heartButton, { transform: [{ scale: heartScale }] }]}>
-          <Image source={require('../../assets/images/heart.png')} style={styles.heartButton} />
-          </Animated.View>
+          <TouchableOpacity onPress={() => navigation.navigate('Nav')} activeOpacity={0.9}>
+            <View style={styles.heartWrapper}>
+              <Animated.Image
+                source={require('../../assets/images/heart.png')}
+                style={[styles.heartButton, { transform: [{ scale: heartScale }] }]}
+                resizeMode="contain"
+              />
+
+              {/* Message 1: yNRA.png */}
+              <Animated.Image
+                source={require('../../assets/images/yNRA.png')}
+                style={[
+                  styles.overlayImage,
+                  { opacity: message1Opacity, transform: [{ scale: messageScale }] },
+                ]}
+                resizeMode="contain"
+              />
+
+              {/* Message 2: clickToContinue.png */}
+              <Animated.Image
+                source={require('../../assets/images/clickToContinue.png')}
+                style={[
+                  styles.overlayImage,
+                  { opacity: message2Opacity, transform: [{ scale: messageScale }] },
+                ]}
+                resizeMode="contain"
+              />
+            </View>
+          </TouchableOpacity>
 
           {friends.map((friend, index) => {
             const angle = (2 * Math.PI / friends.length) * index;
@@ -53,26 +132,20 @@ export default function HomePage({ navigation }) {
               <Image
                 key={friend.id}
                 source={{ uri: friend.image }}
-                style={[styles.friendAvatar, {
-                  transform: [
-                    { translateX: x },
-                    { translateY: y },
-                  ],
-                }]}
+                style={[
+                  styles.friendAvatar,
+                  {
+                    transform: [{ translateX: x }, { translateY: y }],
+                  },
+                ]}
               />
             );
           })}
         </View>
 
-        <TouchableOpacity 
-          style={styles.homeButton}
-          onPress={() => navigation.navigate('Nav')}
-        >
-          <Text style={styles.buttonText}>Go to Nav</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.logoutButton}
+        {/* Logout image button in bottom left */}
+        <TouchableOpacity
+          style={styles.logoutImageWrapper}
           onPress={async () => {
             try {
               await logoutUser();
@@ -82,7 +155,11 @@ export default function HomePage({ navigation }) {
             }
           }}
         >
-          <Text style={styles.logoutButtonText}>Logout</Text>
+          <Image
+            source={require('../../assets/images/logoutButton.png')}
+            style={styles.logoutImage}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -114,18 +191,28 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     position: 'relative',
   },
-  heartButton: {
-    width: width*0.4,
-    height: width*0.4,
-    borderRadius: 40,
+  heartWrapper: {
+    position: 'relative',
+    width: width * 0.4,
+    height: width * 0.4,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2,
-    elevation: 4,
   },
-  heart: {
-    fontSize: 32,
-    color: 'white',
+  heartButton: {
+    width: width * 0.4,
+    height: width * 0.4,
+  },
+  overlayImage: {
+    position: 'absolute',
+    width: width * 0.3,
+    height: width * 0.3,
+    top: '14%',
+    left: '11%',
+    transform: [
+      { translateX: -(width * 0.15) },
+      { translateY: -(width * 0.15) },
+    ],
+    zIndex: 5,
   },
   friendAvatar: {
     position: 'absolute',
@@ -133,41 +220,27 @@ const styles = StyleSheet.create({
     height: width * 0.2,
     borderRadius: width * 0.1,
     borderWidth: 2,
-    borderColor: 'white',
+    borderColor: '#832161',
     top: '50%',
     left: '50%',
     marginLeft: -(width * 0.2) / 2,
     marginTop: -(width * 0.2) / 2,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: '#467599',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 5,
   },
-  homeButton: {
-    backgroundColor: '#D282A6',
-    padding: 15,
-    borderRadius: 10,
+  logoutImageWrapper: {
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    width: width * 0.2,
+    height: width * 0.2,
+  },
+  logoutImage: {
     width: '100%',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  logoutButton: {
-    backgroundColor: '#D282A6',
-    padding: 15,
-    borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
-  },
-  logoutButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    height: '100%',
   },
 });

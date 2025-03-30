@@ -1,521 +1,495 @@
-import * as SQLite from 'expo-sqlite';
 import * as SecureStore from 'expo-secure-store';
-import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Check if running on web
 const isWeb = Platform.OS === 'web';
 
 console.log('==== DATABASE SERVICE INITIALIZING ====');
+console.log('Platform:', Platform.OS);
 
-// Database connection
-let db;
-
-// Get database file path for debugging
-const getDatabasePath = async () => {
-  if (isWeb) return 'localStorage (Web)';
-  
-  try {
-    const dbDir = `${FileSystem.documentDirectory}SQLite/`;
-    await FileSystem.makeDirectoryAsync(dbDir, { intermediates: true });
-    const dbPath = `${dbDir}neverfar.db`;
-    console.log('Database file path:', dbPath);
-    return dbPath;
-  } catch (error) {
-    return 'unknown';
+// Memory database implementation
+class MemoryDatabase {
+  constructor() {
+    this.users = [];
+    this.initialized = false;
+    this.loadInitialData();
   }
-};
-
-// Ensure SQLite directory exists
-const ensureDirectoryExists = async () => {
-  if (isWeb) return;
   
-  try {
-    const dbDir = `${FileSystem.documentDirectory}SQLite/`;
-    await FileSystem.makeDirectoryAsync(dbDir, { intermediates: true });
-    const dirContents = await FileSystem.readDirectoryAsync(dbDir);
-    console.log('SQLite directory contents:', dirContents);
-  } catch (error) {
-    // Silently continue if directory creation fails
-  }
-};
-
-// Initialize database
-let dbInitPromise; // Promise to track database initialization
-
-// Modified database initialization code
-if (!isWeb) {
-  dbInitPromise = (async () => {
-    try {
-      await ensureDirectoryExists();
-      const dbDir = `${FileSystem.documentDirectory}SQLite/`;
-      const dbPath = `${dbDir}neverfar.db`;
-      console.log('Using database path:', dbPath);
-
-      // Debug: Check if SQLite is available
-      console.log('SQLite available:', !!SQLite);
-      console.log('SQLite.openDatabase available:', !!SQLite?.openDatabase);
-      
-      if (!SQLite || typeof SQLite.openDatabase !== 'function') {
-        console.log('SQLite module unavailable, using mock database');
-        db = createMockDatabase();
-      } else {
-        try {
-          // Use the ABSOLUTE file path to ensure persistence
-          db = SQLite.openDatabase(dbPath);
-          console.log('Database opened successfully with path');
-          
-          // Test the database connection immediately
-          let testConnectionSuccessful = false;
-          await new Promise((resolve, reject) => {
-            try {
-              db.transaction(tx => {
-                tx.executeSql(
-                  'SELECT 1',
-                  [],
-                  () => {
-                    console.log('Database test query successful');
-                    testConnectionSuccessful = true;
-                    resolve();
-                  },
-                  (_, error) => {
-                    console.log('Database test query failed:', error);
-                    resolve(); // Still resolve to continue
-                  }
-                );
-              });
-            } catch (err) {
-              console.log('Transaction error in test:', err);
-              resolve(); // Still resolve to continue
-            }
-          });
-          
-          // If test failed, fall back to the mock database
-          if (!testConnectionSuccessful) {
-            console.log('Database test failed, falling back to mock database');
-            db = createMockDatabase();
-          }
-        } catch (dbError) {
-          console.log('Error opening database:', dbError);
-          db = createMockDatabase();
+  async loadInitialData() {
+    if (isWeb) {
+      try {
+        const storedUsers = localStorage.getItem('users');
+        if (storedUsers) {
+          this.users = JSON.parse(storedUsers);
+          console.log(`Loaded ${this.users.length} users from localStorage`);
         }
+      } catch (e) {
+        console.log('Error loading stored users from localStorage:', e);
       }
-
-      // Initialize database (only if db is defined)
-      if (db) {
-        try {
-          await initDatabase();
-          console.log('Database initialization complete');
-        } catch (initError) {
-          console.log('Database initialization failed:', initError);
-          db = createMockDatabase();
+    } else {
+      // For native platforms, use AsyncStorage
+      try {
+        const storedUsers = await AsyncStorage.getItem('users');
+        if (storedUsers) {
+          this.users = JSON.parse(storedUsers);
+          console.log(`Loaded ${this.users.length} users from AsyncStorage`);
         }
-      } else {
-        console.log('Database not defined after opening attempt');
-        db = createMockDatabase();
+      } catch (e) {
+        console.log('Error loading stored users from AsyncStorage:', e);
       }
-      
-      return true;
-    } catch (error) {
-      console.log('Database setup error:', error);
-      db = createMockDatabase();
-      return false;
-    } finally {
-      // Ensure db is always defined
-      if (!db) {
-        console.log('Setting fallback database in finally block');
-        db = createMockDatabase();
-      }
-    }
-  })();
-} else {
-  console.log('Using persistent mock database for web');
-  db = createPersistentMockDatabase();
-  dbInitPromise = Promise.resolve(true);
-}
-
-// Helper function to ensure database is ready before operations
-const ensureDatabaseReady = async () => {
-  if (!db) {
-    console.log('Database not ready, waiting for initialization...');
-    try {
-      await dbInitPromise;
-      
-      if (!db) {
-        console.log('Database still not available after initialization, creating mock');
-        db = createMockDatabase();
-      }
-    } catch (error) {
-      console.log('Error waiting for database initialization');
-      db = createMockDatabase();
-    }
-  }
-  
-  // Extra safety check
-  if (!db) {
-    console.log('Database still undefined after all attempts, creating last-resort mock');
-    db = createMockDatabase();
-  }
-  
-  return db;
-};
-
-// Persistent mock database for web
-function createPersistentMockDatabase() {
-  let users = [];
-  try {
-    const storedUsers = localStorage.getItem('neverfar_users');
-    if (storedUsers) {
-      users = JSON.parse(storedUsers);
-      console.log('Loaded', users.length, 'users from localStorage');
-    }
-  } catch (error) {
-    // Silent failure for localStorage
-  }
-
-  let nextId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
-
-  const saveUsers = () => {
-    try {
-      localStorage.setItem('neverfar_users', JSON.stringify(users));
-      console.log('Saved', users.length, 'users to localStorage');
-    } catch (error) {
-      // Silent failure
-    }
-  };
-
-  return {
-    transaction: (callback) => {
-      const tx = {
-        executeSql: (query, params, successCallback, errorCallback) => {
-          console.log('Mock DB Query:', query);
-          try {
-            if (query.includes('CREATE TABLE')) {
-              successCallback(tx, { rows: { _array: [], length: 0 } });
-            } else if (query.includes('INSERT INTO users')) {
-              const [username, password, email] = params;
-              if (users.find(u => u.username === username)) {
-                if (errorCallback) errorCallback(tx, { message: 'Username already exists' });
-                return;
-              }
-              const newUser = { id: nextId++, username, password, email: email || '' };
-              users.push(newUser);
-              saveUsers();
-              successCallback(tx, { insertId: newUser.id });
-            } else if (query.includes('SELECT * FROM users')) {
-              successCallback(tx, { rows: { _array: users, length: users.length } });
-            } else {
-              console.log('Unhandled mock query:', query);
-              successCallback(tx, { rows: { _array: [], length: 0 } });
-            }
-          } catch (error) {
-            if (errorCallback) errorCallback(tx, error);
-          }
-        }
-      };
-      callback(tx);
-    }
-  };
-}
-
-// Simple mock database for fallback
-function createMockDatabase() {
-  const users = [];
-  let userId = 1;
-
-  return {
-    transaction: (callback) => {
-      const tx = {
-        executeSql: (query, params, successCallback, errorCallback) => {
-          console.log('Mock DB Query:', query);
-          try {
-            if (query.includes('CREATE TABLE')) {
-              successCallback(tx, { rows: { _array: [], length: 0 } });
-            } else if (query.includes('INSERT INTO users')) {
-              const [username, password, email] = params;
-              users.push({ id: userId++, username, password, email: email || '' });
-              successCallback(tx, { insertId: userId - 1 });
-            } else if (query.includes('SELECT * FROM users')) {
-              successCallback(tx, { rows: { _array: users, length: users.length } });
-            } else {
-              console.log('Unhandled mock query:', query);
-              successCallback(tx, { rows: { _array: [], length: 0 } });
-            }
-          } catch (error) {
-            if (errorCallback) errorCallback(tx, error);
-          }
-        }
-      };
-      callback(tx);
-    }
-  };
-}
-
-// Initialize database with tables
-export const initDatabase = async () => {
-  console.log('Initializing database tables and default user...');
-  return new Promise((resolve, reject) => {
-    try {
-      db.transaction(tx => {
-        tx.executeSql(
-          `CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT,
-            email TEXT
-          )`,
-          [],
-          () => {
-            console.log('Users table initialized');
-            
-            // Force creation of default user without checking count
-            tx.executeSql(
-              'INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)',
-              ['test', 'password123'],
-              (_, result) => {
-                console.log('Default user created/verified');
-                
-                // Verify the user exists by selecting it
-                tx.executeSql(
-                  'SELECT * FROM users WHERE username = ?',
-                  ['test'],
-                  (_, { rows }) => {
-                    if (rows.length > 0) {
-                      console.log('Confirmed default user exists:', rows._array[0]);
-                    } else {
-                      console.log('WARNING: Failed to create default user!');
-                      
-                      // Try one more time with a direct insert
-                      tx.executeSql(
-                        'INSERT OR REPLACE INTO users (username, password) VALUES (?, ?)',
-                        ['test', 'password123'],
-                        () => console.log('Retry: Default user inserted'),
-                        (_, insertError) => console.log('Retry insert failed')
-                      );
-                    }
-                    resolve();
-                  },
-                  (_, error) => {
-                    console.log('Error verifying default user');
-                    resolve();
-                  }
-                );
-              },
-              (_, error) => {
-                console.log('Error creating default user:', error);
-                resolve();
-              }
-            );
-          },
-          (_, error) => {
-            console.log('Error creating table:', error);
-            reject(error);
-          }
-        );
-      });
-    } catch (error) {
-      console.log('Transaction error during initialization:', error);
-      reject(error);
-    }
-  });
-};
-
-export const registerUser = async (username, password, email = '') => {
-  console.log(`Registering user: ${username}`);
-  
-  // Ensure database is initialized before proceeding
-  await ensureDatabaseReady();
-  
-  return new Promise((resolve, reject) => {
-    if (!db) {
-      reject(new Error('Database not initialized despite attempts'));
-      return;
     }
     
-    try {
-      // Define these functions first
-      function performRegistration() {
-        db.transaction(tx => {
-          tx.executeSql(
-            'INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
-            [username, password, email || ''],
-            (_, { insertId }) => {
-              console.log('User registered with ID:', insertId);
-              resolve(insertId);
-            },
-            (_, error) => {
-              console.log('Error inserting user:', error);
-              reject(error);
-            }
-          );
-        });
-      }
-      
-      // Check if username exists
-      db.transaction(tx => {
-        tx.executeSql(
-          'SELECT id FROM users WHERE username = ?',
-          [username],
-          (_, { rows }) => {
-            if (rows.length > 0) {
-              reject(new Error('Username already exists'));
-            } else {
-              performRegistration();
-            }
-          },
-          (_, error) => {
-            console.log('Error checking username:', error);
-            reject(error);
-          }
-        );
-      });
-    } catch (error) {
-      console.log('Transaction error in registration:', error);
-      reject(error);
-    }
-  });
-};
-
-// Add authenticateUser function
-export const authenticateUser = async (username, password) => {
-  console.log(`Authenticating user: ${username}`);
+    // Always ensure test user exists
+    this.ensureTestUser();
+    this.initialized = true;
+  }
   
-  // Ensure database is initialized
-  await ensureDatabaseReady();
+  ensureTestUser() {
+    if (!this.users.some(u => u.username === 'test')) {
+      this.users.push({
+        id: this.users.length > 0 ? Math.max(...this.users.map(u => u.id)) + 1 : 1,
+        username: 'test',
+        password: 'password123'
+      });
+      this.saveData();
+      console.log('Default test user added');
+    }
+  }
+  
+  async saveData() {
+    if (isWeb) {
+      localStorage.setItem('users', JSON.stringify(this.users));
+    } else {
+      // For native platforms, use AsyncStorage
+      try {
+        await AsyncStorage.setItem('users', JSON.stringify(this.users));
+        console.log('Saved users to AsyncStorage');
+      } catch (e) {
+        console.log('Error saving users to AsyncStorage:', e);
+      }
+    }
+  }
+  
+  transaction(callback) {
+    const tx = {
+      executeSql: (query, params, successCallback, errorCallback) => {
+        console.log('Memory DB query:', query);
+        
+        try {
+          // Simulate SQL operations using our in-memory data
+          if (query.includes('CREATE TABLE')) {
+            // No-op, tables always exist in memory DB
+            successCallback(tx, { rows: { _array: [], length: 0 } });
+          } else if (query.includes('INSERT INTO users')) {
+            const [username, password] = params;
+            
+            // Check if username exists
+            const existingUser = this.users.find(u => u.username === username);
+            
+            if (query.includes('INSERT OR IGNORE') || query.includes('INSERT OR REPLACE')) {
+              // Upsert operation
+              if (!existingUser) {
+                const newUser = {
+                  id: this.users.length > 0 ? Math.max(...this.users.map(u => u.id)) + 1 : 1,
+                  username,
+                  password
+                };
+                this.users.push(newUser);
+                this.saveData();
+                successCallback(tx, { insertId: newUser.id });
+              } else {
+                if (query.includes('REPLACE')) {
+                  existingUser.password = password;
+                  this.saveData();
+                }
+                successCallback(tx, { insertId: existingUser.id });
+              }
+            } else {
+              // Regular insert
+              if (existingUser) {
+                errorCallback && errorCallback(tx, new Error('Username already exists'));
+              } else {
+                const newUser = {
+                  id: this.users.length > 0 ? Math.max(...this.users.map(u => u.id)) + 1 : 1,
+                  username,
+                  password
+                };
+                this.users.push(newUser);
+                this.saveData();
+                successCallback(tx, { insertId: newUser.id });
+              }
+            }
+          } else if (query.includes('SELECT * FROM users WHERE username = ? AND password = ?')) {
+            const [username, password] = params;
+            const user = this.users.find(u => 
+              u.username === username && u.password === password
+            );
+            
+            successCallback(tx, {
+              rows: {
+                _array: user ? [user] : [],
+                length: user ? 1 : 0
+              }
+            });
+          } else if (query.includes('SELECT * FROM users WHERE username =')) {
+            const username = params[0];
+            const user = this.users.find(u => u.username === username);
+            
+            successCallback(tx, {
+              rows: {
+                _array: user ? [user] : [],
+                length: user ? 1 : 0
+              }
+            });
+          } else if (query.includes('SELECT * FROM users')) {
+            successCallback(tx, {
+              rows: {
+                _array: this.users,
+                length: this.users.length
+              }
+            });
+          } else if (query.includes('DELETE FROM users')) {
+            // Never delete the test user
+            this.users = this.users.filter(u => u.username === 'test');
+            this.saveData();
+            successCallback(tx, {});
+          } else {
+            successCallback(tx, { rows: { _array: [], length: 0 } });
+          }
+        } catch (error) {
+          console.log('Memory DB error:', error);
+          errorCallback && errorCallback(tx, error);
+        }
+      }
+    };
+    
+    callback(tx);
+  }
+}
+
+// Create database instance
+const memoryDb = new MemoryDatabase();
+const db = memoryDb;
+
+// Rest of your code stays mostly the same, but we'll update a few functions
+export const initDatabase = async () => {
+  console.log('Initializing database...');
+  
+  // Ensure test user exists
+  memoryDb.ensureTestUser();
   
   return new Promise((resolve, reject) => {
     try {
       db.transaction(tx => {
         tx.executeSql(
-          'SELECT * FROM users WHERE username = ? AND password = ?',
-          [username, password],
+          'SELECT * FROM users WHERE username = ?',
+          ['test'],
+          (_, { rows }) => {
+            console.log(`Found ${rows.length} users with username 'test'`);
+            
+            if (rows.length > 0) {
+              console.log('Test user exists:', rows._array[0]);
+              resolve(true);
+            } else {
+              console.log('No test user, creating one...');
+              
+              tx.executeSql(
+                'INSERT INTO users (username, password) VALUES (?, ?)',
+                ['test', 'password123'],
+                () => {
+                  console.log('Created test user');
+                  resolve(true);
+                },
+                (_, error) => {
+                  console.log('Error creating test user:', error);
+                  reject(error);
+                }
+              );
+            }
+          },
+          (_, error) => {
+            console.log('Error checking test user:', error);
+            reject(error);
+          }
+        );
+      });
+    } catch (error) {
+      console.log('Error initializing database:', error);
+      reject(error);
+    }
+  });
+};
+
+// The rest of your functions can remain mostly the same
+// They all use the db.transaction API which our memory implementation provides
+
+// Add this to help with debugging
+export const getDatabase = () => {
+  return {
+    type: 'memory',
+    users: memoryDb.users
+  };
+};
+
+// Clear all sessions (for testing)
+export const clearAllSessions = async () => {
+  console.log('Clearing all sessions');
+  if (isWeb) {
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('username');
+    localStorage.removeItem('isLoggedIn');
+  } else {
+    try {
+      // Clear AsyncStorage
+      await AsyncStorage.removeItem('user_id');
+      await AsyncStorage.removeItem('username');
+      await AsyncStorage.removeItem('isLoggedIn');
+      
+      // Clear SecureStore
+      await SecureStore.deleteItemAsync('user_id');
+      await SecureStore.deleteItemAsync('username');
+      await SecureStore.deleteItemAsync('isLoggedIn');
+    } catch (e) {
+      console.log('Error clearing sessions:', e);
+    }
+  }
+};
+
+// Simplified authentication - strict check for username AND password
+export const authenticateUser = async (username, password) => {
+  console.log(`Authenticating: '${username}' with password '${password}'`);
+  
+  if (!username || !password) {
+    console.log('Missing username or password');
+    return Promise.reject(new Error('Username and password are required'));
+  }
+  
+  // Special case for test/password123
+  if (username === 'test' && password === 'password123') {
+    console.log('Using test credentials...');
+    
+    // Check if test user exists in database
+    return new Promise((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          'SELECT * FROM users WHERE username = ?',
+          ['test'],
           (_, { rows }) => {
             if (rows.length > 0) {
+              console.log('Test user found, authenticating');
               resolve(rows._array[0]);
             } else {
-              reject(new Error('Invalid credentials'));
+              console.log('Test user not found, creating it first');
+              // Create test user if it doesn't exist
+              tx.executeSql(
+                'INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)',
+                ['test', 'password123'],
+                () => {
+                  console.log('Created test user during authentication');
+                  // Now get the user to return
+                  tx.executeSql(
+                    'SELECT * FROM users WHERE username = ?',
+                    ['test'],
+                    (_, { rows }) => {
+                      if (rows.length > 0) {
+                        resolve(rows._array[0]);
+                      } else {
+                        reject(new Error('Failed to create test user'));
+                      }
+                    },
+                    (_, error) => reject(error)
+                  );
+                },
+                (_, error) => reject(error)
+              );
             }
           },
-          (_, error) => {
-            console.log('Auth error:', error);
-            reject(error);
-          }
+          (_, error) => reject(error)
         );
       });
-    } catch (error) {
-      console.log('Transaction error during auth:', error);
-      reject(error);
-    }
+    });
+  }
+  
+  // Standard authentication logic for non-test users
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'SELECT * FROM users WHERE username = ? AND password = ?',
+        [username, password],
+        (_, { rows }) => {
+          console.log(`Found ${rows.length} matching users`);
+          
+          if (rows.length > 0) {
+            console.log('Authentication successful');
+            resolve(rows._array[0]);
+          } else {
+            console.log('Authentication failed');
+            reject(new Error('Invalid username or password'));
+          }
+        },
+        (_, error) => {
+          console.log('Authentication error:', error);
+          reject(error);
+        }
+      );
+    });
   });
 };
 
-// Add getUserSession function
+// Unified credential verification
+export const verifyCredentials = async (username, password) => {
+  try {
+    const user = await authenticateUser(username, password);
+    
+    // Save session
+    await saveUserSession(user.id, user.username);
+    
+    return {
+      success: true,
+      user
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+// Save user session - update to ensure persistence
+export const saveUserSession = async (userId, username) => {
+  if (isWeb) {
+    localStorage.setItem('user_id', userId.toString());
+    localStorage.setItem('username', username);
+    localStorage.setItem('isLoggedIn', 'true');
+  } else {
+    try {
+      await AsyncStorage.setItem('user_id', userId.toString());
+      await AsyncStorage.setItem('username', username);
+      await AsyncStorage.setItem('isLoggedIn', 'true');
+      
+      // Also save in SecureStore as a backup
+      await SecureStore.setItemAsync('user_id', userId.toString());
+      await SecureStore.setItemAsync('username', username);
+      await SecureStore.setItemAsync('isLoggedIn', 'true');
+    } catch (e) {
+      console.log('Error saving session:', e);
+    }
+  }
+  console.log(`Session saved for user: ${username}`);
+  return true;
+};
+
+// Get user session - update to check both AsyncStorage and SecureStore
 export const getUserSession = async () => {
   try {
-    let isLoggedIn, userId, username;
+    let userId, username, isLoggedIn;
     
-    if (!isWeb) {
-      isLoggedIn = await SecureStore.getItemAsync('isLoggedIn');
-      if (isLoggedIn === 'true') {
+    if (isWeb) {
+      isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      userId = localStorage.getItem('user_id');
+      username = localStorage.getItem('username');
+    } else {
+      // Try AsyncStorage first
+      isLoggedIn = await AsyncStorage.getItem('isLoggedIn') === 'true';
+      userId = await AsyncStorage.getItem('user_id');
+      username = await AsyncStorage.getItem('username');
+      
+      // If not found, try SecureStore as backup
+      if (!isLoggedIn) {
+        isLoggedIn = await SecureStore.getItemAsync('isLoggedIn') === 'true';
         userId = await SecureStore.getItemAsync('user_id');
         username = await SecureStore.getItemAsync('username');
       }
-    } else {
-      // Web fallback
-      isLoggedIn = localStorage.getItem('isLoggedIn');
-      if (isLoggedIn === 'true') {
-        userId = localStorage.getItem('user_id');
-        username = localStorage.getItem('username');
-      }
     }
     
-    console.log(`Session: logged in: ${isLoggedIn === 'true'}, user: ${username}`);
-    return { 
-      userId, 
-      username, 
-      isLoggedIn: isLoggedIn === 'true' 
-    };
+    console.log('Current session:', { userId, username, isLoggedIn });
+    return { userId, username, isLoggedIn };
   } catch (error) {
     console.log('Error getting session:', error);
     return { isLoggedIn: false };
   }
 };
 
-// Add saveUserSession function
-export const saveUserSession = async (userId, username) => {
-  console.log(`Saving session for user: ${username}`);
-  
-  try {
-    if (!isWeb) {
-      await SecureStore.setItemAsync('user_id', userId.toString());
-      await SecureStore.setItemAsync('username', username);
-      await SecureStore.setItemAsync('isLoggedIn', 'true');
-    } else {
-      // Web fallback using localStorage
-      localStorage.setItem('user_id', userId.toString());
-      localStorage.setItem('username', username);
-      localStorage.setItem('isLoggedIn', 'true');
-    }
-    return true;
-  } catch (error) {
-    console.log('Error saving session:', error);
-    return false;
-  }
-};
-
-// Add logoutUser function
+// Log out
 export const logoutUser = async () => {
-  try {
-    if (!isWeb) {
-      await SecureStore.deleteItemAsync('user_id');
-      await SecureStore.deleteItemAsync('username');
-      await SecureStore.deleteItemAsync('isLoggedIn');
-    } else {
-      localStorage.removeItem('user_id');
-      localStorage.removeItem('username');
-      localStorage.removeItem('isLoggedIn');
-    }
-    return true;
-  } catch (error) {
-    console.log('Error during logout:', error);
-    return false;
-  }
+  return clearAllSessions();
 };
 
-// Add listAllUsers function
+// List all users
 export const listAllUsers = async () => {
-  await ensureDatabaseReady();
-  
   return new Promise((resolve, reject) => {
-    try {
-      db.transaction(tx => {
-        tx.executeSql(
-          'SELECT * FROM users',
-          [],
-          (_, { rows }) => {
-            console.log('All users:', JSON.stringify(rows._array));
-            resolve(rows._array);
-          },
-          (_, error) => {
-            console.log('Error listing users:', error);
-            reject(error);
-          }
-        );
-      });
-    } catch (error) {
-      console.log('Transaction error listing users:', error);
-      reject(error);
-    }
+    db.transaction(tx => {
+      tx.executeSql(
+        'SELECT * FROM users',
+        [],
+        (_, { rows }) => {
+          console.log('All users:', rows._array);
+          resolve(rows._array);
+        },
+        (_, error) => {
+          console.log('Error listing users:', error);
+          reject(error);
+        }
+      );
+    });
   });
 };
 
-// Add this to export all functions for easy importing
+// User registration
+export const registerUser = async (username, password, firstName = '', lastName = '') => {
+  console.log(`Registering user: ${username}`);
+  
+  if (!username || !password) {
+    console.log('Missing username or password');
+    return Promise.reject(new Error('Username and password are required'));
+  }
+  
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      // Check if username exists
+      tx.executeSql(
+        'SELECT * FROM users WHERE username = ?',
+        [username],
+        (_, { rows }) => {
+          if (rows.length > 0) {
+            console.log('Username already exists');
+            reject(new Error('Username already exists'));
+          } else {
+            // Insert new user
+            tx.executeSql(
+              'INSERT INTO users (username, password) VALUES (?, ?)',
+              [username, password],
+              (_, { insertId }) => {
+                console.log('User registered successfully, ID:', insertId);
+                resolve(insertId);
+              },
+              (_, error) => {
+                console.log('Error inserting user:', error);
+                reject(error);
+              }
+            );
+          }
+        },
+        (_, error) => {
+          console.log('Error checking username:', error);
+          reject(error);
+        }
+      );
+    });
+  });
+};
+
 export default {
-  registerUser,
+  initDatabase,
   authenticateUser,
-  getUserSession,
+  registerUser,  // <-- Add this line
+  verifyCredentials,
   saveUserSession,
+  getUserSession,
   logoutUser,
   listAllUsers,
-  initDatabase
+  clearAllSessions,
+  getDatabase
 };
